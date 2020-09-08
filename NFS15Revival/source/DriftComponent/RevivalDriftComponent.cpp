@@ -26,7 +26,7 @@ __m128 Radians2DegreesVector(__m128* radian) {
     return _mm_mul_ps(*radian, _mm_shuffle_ps({ (180 / pi) }, { (180 / pi) }, 0));
 }
 
-float GetDeltaTime(uintptr_t nfsVehicle)
+float GetDeltaTime(NFSVehicle* nfsVehicle)
 {
     float dT;
     ReadProcessMemory(GetCurrentProcess(), (BYTE*)nfsVehicle + 0xE78, &dT, sizeof(dT), nullptr);
@@ -36,26 +36,31 @@ float GetDeltaTime(uintptr_t nfsVehicle)
 
 float GetAvgRearSlip(DriftComponent* driftComponent)
 {
-    float slipAng;
-    ReadProcessMemory(GetCurrentProcess(), (BYTE*)(&driftComponent->avgSlipAngle.m128_f32[0]), &slipAng, sizeof(slipAng), nullptr);
-    return slipAng;
+    //float slipAng;
+    //ReadProcessMemory(GetCurrentProcess(), (BYTE*)(&driftComponent->avgSlipAngle.m128_f32[0]), &slipAng, sizeof(slipAng), nullptr);
+    return driftComponent->avgSlipAngle.m128_f32[0];
 }
 
 float GetSpeedMph(NFSVehicle* nfsVehicle)
 {
-    float speed;
+    //float speed;
 
-    ReadProcessMemory(GetCurrentProcess(), (BYTE*)(&nfsVehicle->speedMps), &speed, sizeof(speed), nullptr);
-    return speed * 2.2369399;
+    //ReadProcessMemory(GetCurrentProcess(), (BYTE*)(&nfsVehicle->speedMps), &speed, sizeof(speed), nullptr);
+    return nfsVehicle->speedMps * 2.2369399;
 }
 
 bool CheckForEnteringDrift(NFSVehicle* nfsVehicle, DriftComponent* driftComp)
 {
-    float slipToEnterDrift;
+    float slipToEnterDrift = driftComp->driftParams->driftTriggerParams->Slip_angle_to_enter_drift;
     float minSpeedToEnterDrift = 30;
 
-    ReadProcessMemory(GetCurrentProcess(), (BYTE*)(&driftComp->driftParams->driftTriggerParams->Slip_angle_to_enter_drift), &slipToEnterDrift, sizeof(slipToEnterDrift), nullptr);
+    //ReadProcessMemory(GetCurrentProcess(), (BYTE*)(&driftComp->driftParams->driftTriggerParams->Slip_angle_to_enter_drift), &slipToEnterDrift, sizeof(slipToEnterDrift), nullptr);
     float avgSlipAng = GetAvgRearSlip(driftComp);
 
     return fabsf(GetSpeedMph(nfsVehicle)) >= minSpeedToEnterDrift && fabsf(avgSlipAng) >= slipToEnterDrift;
+}
+
+void GetDriftScale(BrawlDriftComponent* driftComp)
+{
+    driftComp->driftScale = map(driftComp->driftAngle, -80, 80, -1, 1);
 }

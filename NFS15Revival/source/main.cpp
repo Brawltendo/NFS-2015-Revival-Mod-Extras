@@ -44,7 +44,7 @@ BrawlDriftComponent bDriftComp;
 
 typedef void(__fastcall* _AddWorldCOMForceLogged)(RaceRigidBody* rigidBody, __m128* force, __m128* lfTimeStep);
 typedef void(__fastcall* _DampPitchYawRoll)(RaceRigidBody* chassis, __m128* pitchDampening, __m128* yawDampening, __m128* rollDampening, __m128* lfTimeStep);
-// Frostbite transformation matrix: Side vector = X, up vector = Y, forward vector = Z, location = W
+// Returns Frostbite transformation matrix: Side vector = X, up vector = Y, forward vector = Z, location = W
 typedef Matrix44* (__fastcall* _GetTransform)(RaceRigidBody* chassis, Matrix44* transformOut);
 typedef __m128* (__fastcall* _GetAngularVelocity)(RaceRigidBody* const chassis, __m128* angVelOut);
 typedef void(__fastcall* _MaintainDriftSpeed)(DriftComponent* driftComp, __m128* lvfGasInput, __m128* lvfBrakeInput, __m128* lDirection, class RaceCarPhysicsObject* lpRaceCar, __m128* lvfTimeStep);
@@ -67,6 +67,71 @@ _ApplyDamping ApplyDamping;
 _ApplyDriftForces ApplyDriftForces;
 _calcSteeringFromPitchAndYaw calcSteeringFromPitchAndYaw;
 
+/*
+/ Revival functions start
+*/
+float GetLocalAngVelDegrees(RaceRigidBody* chassis)
+{
+    Matrix44 matrix;
+    __m128 angVelOut;
+    __m128 upVector = GetTransform(chassis, &matrix)->yAxis;
+    __m128 angVel = *GetAngularVelocity(chassis, &angVelOut);
+
+    __m128 mulByUpVec = _mm_mul_ps(upVector, angVel);
+    __m128 localAngVel = _mm_add_ps(
+        _mm_add_ps(
+            _mm_shuffle_ps(mulByUpVec, mulByUpVec, 2),
+            _mm_shuffle_ps(mulByUpVec, mulByUpVec, 1)),
+        mulByUpVec);
+    __m128 localAngVelFinal = _mm_shuffle_ps(localAngVel, localAngVel, 0);
+    return Radians2Degrees(localAngVelFinal.m128_f32[0]);
+}
+
+void GetDriftAngle(RaceRigidBody* chassis, BrawlDriftComponent* driftComp, float lastAngVel)
+{
+    float angVelDeg = GetLocalAngVelDegrees(chassis);
+
+    float currentDriftAngle = (abs(angVelDeg) - abs(lastAngVel)) * sign(angVelDeg, 1);
+    driftComp->driftAngle = currentDriftAngle;
+}
+
+void DriftSideForce(NFSVehicle* nfsVehicle, DriftComponent* driftComp, BrawlDriftComponent* bDrift, RaceRigidBody* chassis)
+{
+    Matrix44 matrix;
+    __m128 sideVector = GetTransform(chassis, &matrix)->xAxis;
+    __m128 timeStep = _mm_shuffle_ps({ GetDeltaTime(nfsVehicle) }, { GetDeltaTime(nfsVehicle) }, 0);
+
+    float sideForceMagnitude = driftComp->driftParams->sideForceParams->Side_force_magnitude;
+    float sideForceMultiplier = driftComp->driftParams->sideForceParams->Side_force_multiplier;
+    //float angVelDeg = GetLocalAngVelDegrees(chassis);
+    Debug("driftAngle: %f\n", bDrift->driftAngle);
+    float driftAngRange = map(abs(bDrift->driftAngle), driftComp->driftParams->sideForceParams->Minimum_drift_angle_for_side_force, driftComp->driftParams->sideForceParams->Drift_angle_for_side_force, 0.2f, 1);
+    float sideForceSpeedRatio = map(GetSpeedMph(nfsVehicle), driftComp->driftParams->sideForceParams->Speed_for_no_sideforce, driftComp->driftParams->sideForceParams->Speed_for_maximum_side_force, 0, 1);
+    bool isCounterSteering = bDrift->driftAngle * nfsVehicle->vehicleInput->steeringInput.X < 0;
+    driftComp->counterSteeringInDrift = isCounterSteering;
+    float sideForceToAdd = isCounterSteering ? sideForceMagnitude * sideForceMultiplier : sideForceMagnitude;
+    __m128 force = {
+        sideForceToAdd * ((driftAngRange * sideForceSpeedRatio * nfsVehicle->vehicleInput->throttleInput.X) * (sign(bDrift->driftAngle, 1) * -1)) * sideVector.m128_f32[0],
+        sideForceToAdd * ((driftAngRange * sideForceSpeedRatio * nfsVehicle->vehicleInput->throttleInput.X) * (sign(bDrift->driftAngle, 1) * -1)) * sideVector.m128_f32[1],
+        sideForceToAdd * ((driftAngRange * sideForceSpeedRatio * nfsVehicle->vehicleInput->throttleInput.X) * (sign(bDrift->driftAngle, 1) * -1)) * sideVector.m128_f32[2],
+        sideForceToAdd * ((driftAngRange * sideForceSpeedRatio * nfsVehicle->vehicleInput->throttleInput.X) * (sign(bDrift->driftAngle, 1) * -1)) * sideVector.m128_f32[3]
+    };
+    AddWorldCOMForceLogged(chassis, &force, &timeStep);
+}
+
+void DriftSpeedRetention(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RaceRigidBody* chassis)
+{
+    Matrix44 matrix;
+    float absSpeedMps = abs(nfsVehicle->speedMps);
+    __m128 forwardVector = {}; // GetTransform(chassis, &matrix)->zAxis;
+    __m128 gasInput = _mm_shuffle_ps({ nfsVehicle->vehicleInput->throttleInput.X }, { nfsVehicle->vehicleInput->throttleInput.X }, 0);
+    __m128 brakeInput = _mm_shuffle_ps({ nfsVehicle->vehicleInput->brakeInput.X }, { nfsVehicle->vehicleInput->brakeInput.X }, 0);
+    __m128 timeStep = _mm_shuffle_ps({ GetDeltaTime(nfsVehicle) }, { GetDeltaTime(nfsVehicle) }, 0);
+
+    // Call original game's speed retention function, but use MUCH smaller scaling for Reduce_forward_speed_amount and Maintain_entry_speed_amount in the vehicle drift configs.
+    MaintainDriftSpeed(driftComp, &gasInput, &brakeInput, &forwardVector, nfsVehicle->raceCarPhysObj, &timeStep);
+}
+
 void ApplyDriftDamping(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RaceRigidBody* chassis)
 {
     float slipToEnterDrift = driftComp->driftParams->driftTriggerParams->Slip_angle_to_enter_drift;
@@ -75,10 +140,8 @@ void ApplyDriftDamping(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RaceRi
     float timeToBlendDamping = driftComp->driftParams->driftTriggerParams->Time_to_blend_damping;
     float lvfGasInput = nfsVehicle->vehicleInput->throttleInput.X;
     float angDamping = driftComp->driftParams->driftTriggerParams->Drift_angular_damping;
-    __m128 timeStep = _mm_shuffle_ps({ GetDeltaTime((uintptr_t)nfsVehicle) }, { GetDeltaTime((uintptr_t)nfsVehicle) }, 0);
+    __m128 timeStep = _mm_shuffle_ps({ GetDeltaTime(nfsVehicle) }, { GetDeltaTime(nfsVehicle) }, 0);
     float avgTireGrip = driftComp->avgTireGrip.m128_f32[0];
-
-    //ReadProcessMemory(GetCurrentProcess(), (BYTE*)((uintptr_t)driftComp + 0x210), &avgTireGrip, sizeof(avgTireGrip), nullptr);
 
     float avgSlipAng = GetAvgRearSlip(driftComp);
     float dampingBlendTime = 1 - (bDriftComp.timeSinceLastDrift / timeToBlendDamping);
@@ -94,56 +157,8 @@ void ApplyDriftDamping(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RaceRi
     ApplyDamping(driftComp, &_mm_shuffle_ps({ 1 }, { 1 }, 0), &dampingScale, &timeStep);
 }
 /*
-/ 
-/
+/ Revival functions end
 */
-
-void DriftSideForce(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RaceRigidBody* chassis)
-{
-    Matrix44 matrix;
-    __m128 angVelOut;
-    __m128 upVector = GetTransform(chassis, &matrix)->yAxis;
-    __m128 sideVector = GetTransform(chassis, &matrix)->xAxis;
-    __m128 angVel = *GetAngularVelocity(chassis, &angVelOut);
-    __m128 timeStep = { GetDeltaTime((uintptr_t)nfsVehicle), GetDeltaTime((uintptr_t)nfsVehicle), GetDeltaTime((uintptr_t)nfsVehicle), GetDeltaTime((uintptr_t)nfsVehicle) };
-
-    __m128 mulByUpVec = _mm_mul_ps(upVector, angVel);
-    __m128 localAngVel = _mm_add_ps(
-        _mm_add_ps(
-            _mm_shuffle_ps(mulByUpVec, mulByUpVec, 2),
-            _mm_shuffle_ps(mulByUpVec, mulByUpVec, 1)),
-        mulByUpVec);
-    __m128 localAngVelFinal = _mm_shuffle_ps(localAngVel, localAngVel, 0);
-
-    float sideForceMagnitude = driftComp->driftParams->sideForceParams->Side_force_magnitude;
-    float sideForceMultiplier = driftComp->driftParams->sideForceParams->Side_force_multiplier;
-    float angVelDeg = Radians2Degrees(localAngVelFinal.m128_f32[0]);
-    Debug("angVel: %f\n", angVelDeg);
-    float driftAngRange = map(abs(angVelDeg), driftComp->driftParams->sideForceParams->Minimum_drift_angle_for_side_force, driftComp->driftParams->sideForceParams->Drift_angle_for_side_force, 0.4f, 1);
-    float sideForceSpeedRatio = map(GetSpeedMph(nfsVehicle), driftComp->driftParams->sideForceParams->Speed_for_no_sideforce, driftComp->driftParams->sideForceParams->Speed_for_maximum_side_force, 0, 1);
-    bool isCounterSteering = sign(angVelDeg, 1) * nfsVehicle->vehicleInput->steeringInput.X < 0;
-    float sideForceToAdd = isCounterSteering ? sideForceMagnitude * sideForceMultiplier : sideForceMagnitude;
-    __m128 force = { 
-        sideForceToAdd * ((driftAngRange * sideForceSpeedRatio) * (sign(angVelDeg, 1) * -1)) * sideVector.m128_f32[0],
-        sideForceToAdd * ((driftAngRange * sideForceSpeedRatio) * (sign(angVelDeg, 1) * -1)) * sideVector.m128_f32[1],
-        sideForceToAdd * ((driftAngRange * sideForceSpeedRatio) * (sign(angVelDeg, 1) * -1)) * sideVector.m128_f32[2],
-        sideForceToAdd * ((driftAngRange * sideForceSpeedRatio) * (sign(angVelDeg, 1) * -1)) * sideVector.m128_f32[3] 
-    };
-    AddWorldCOMForceLogged(chassis, &force, &timeStep);
-}
-
-void DriftSpeedRetention(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RaceRigidBody* chassis)
-{
-    Matrix44 matrix;
-    float absSpeedMps = abs(nfsVehicle->speedMps);
-    __m128 forwardVector = GetTransform(chassis, &matrix)->zAxis;
-    __m128 gasInput = _mm_shuffle_ps({ nfsVehicle->vehicleInput->throttleInput.X }, { nfsVehicle->vehicleInput->throttleInput.X }, 0);
-    __m128 brakeInput = _mm_shuffle_ps({ nfsVehicle->vehicleInput->brakeInput.X }, { nfsVehicle->vehicleInput->brakeInput.X }, 0);
-    __m128 timeStep = _mm_shuffle_ps({ GetDeltaTime((uintptr_t)nfsVehicle) }, { GetDeltaTime((uintptr_t)nfsVehicle) }, 0);
-
-    // Call original game's speed retention function, but use MUCH smaller scaling for Reduce_forward_speed_amount and Maintain_entry_speed_amount in the vehicle drift configs.
-    MaintainDriftSpeed(driftComp, &gasInput, &brakeInput, &forwardVector, nfsVehicle->raceCarPhysObj, &timeStep);
-}
 
 DWORD WINAPI Start(LPVOID lpParam)
 {
@@ -157,7 +172,8 @@ DWORD WINAPI Start(LPVOID lpParam)
     freopen_s(&pFile, "CONOUT$", "w", stderr);
 
     uintptr_t game = (uintptr_t)GetModuleHandle(NULL);
-    NFSVehicle* nfsVehicle = nullptr;
+    NFSVehicle* nfsVehicle = NULL;
+    DriftComponent* driftComponent = NULL;
     uintptr_t nfsVehicleBase = game + 0x02C431A0;
     Debug("gameMainAddress: %I64X\n", game);
 
@@ -197,11 +213,9 @@ DWORD WINAPI Start(LPVOID lpParam)
     while (1)
     {
         nfsVehicle = (NFSVehicle*)FindDMAAddy(GetCurrentProcess(), nfsVehicleBase, { 0x28, 0x20, 0x0, 0xD8, 0x0 });
-        DriftComponent* driftComponent = nfsVehicle->driftComponent; //(DriftComponent*)FindDMAAddy(GetCurrentProcess(), nfsVehicleBase, { 0x28, 0x20, 0x0, 0xD8, 0x118, 0xE80, 0x0 }); //nfsVehicle + 0x11A8;
-        RaceRigidBody* rigidBody = nfsVehicle->raceRigidBody; //(RaceRigidBody*)FindDMAAddy(GetCurrentProcess(), (uintptr_t)driftComponent + 0x18, { 0x0 });
         
-        /* Uncomment to be able to add force upwards by pressing numpad 8, useful for exploring out of bounds and making other players say WTF
-        
+        /* 
+        Uncomment block to allow adding force upwards by pressing numpad 8, useful for exploring out of bounds and making other players say WTF
         if (GetAsyncKeyState(VK_NUMPAD8))
         {
             Debug("nfsVehicleAddress: %I64X\n", nfsVehicle);
@@ -217,8 +231,17 @@ DWORD WINAPI Start(LPVOID lpParam)
         }
         */
 
-        if (GetAsyncKeyState(VK_UP))
+        // Check to see whether or not the NFSVehicle pointer is valid
+        float nfsVehicleChecker;
+        ReadProcessMemory(GetCurrentProcess(), (BYTE*)(uintptr_t)nfsVehicle + 0x64, &nfsVehicleChecker, sizeof(nfsVehicleChecker), nullptr);
+
+        driftComponent = (DriftComponent*)FindDMAAddy(GetCurrentProcess(), nfsVehicleBase, { 0x28, 0x20, 0x0, 0xD8, 0x118, 0xE80, 0x0 }); //nfsVehicle + 0x11A8; nfsVehicle->driftComponent;
+
+        if (nfsVehicleChecker == 150 && nfsVehicle->driftComponent != NULL)
         {
+            float angVelDeg;
+            RaceRigidBody* rigidBody = (RaceRigidBody*)FindDMAAddy(GetCurrentProcess(), (uintptr_t)driftComponent + 0x18, { 0x0 }); //nfsVehicle->raceRigidBody;
+
             if (CheckForEnteringDrift(nfsVehicle, driftComponent))
             {
                 /*
@@ -226,39 +249,48 @@ DWORD WINAPI Start(LPVOID lpParam)
                 __m128 brakeInput = _mm_shuffle_ps({ nfsVehicle->vehicleInput->brakeInput.X }, { nfsVehicle->vehicleInput->brakeInput.X }, 0);
                 __m128 steeringInput = _mm_shuffle_ps({ nfsVehicle->vehicleInput->steeringInput.X }, { nfsVehicle->vehicleInput->steeringInput.X }, 0);
                 */
-                __m128 timeStep = _mm_shuffle_ps({ GetDeltaTime((uintptr_t)nfsVehicle) }, { GetDeltaTime((uintptr_t)nfsVehicle) }, 0);
+
+                __m128 timeStep = _mm_shuffle_ps({ GetDeltaTime(nfsVehicle) }, { GetDeltaTime(nfsVehicle) }, 0);
+                __m128 avgSlipAng = _mm_shuffle_ps({ GetAvgRearSlip(driftComponent) }, { GetAvgRearSlip(driftComponent) }, 0);
+                float speedMph = GetSpeedMph(nfsVehicle);
 
                 driftComponent->timeSpentInDrift = { 0,0,0,0 };
-                driftComponent->reduceForwardSpeedAmount = 
+                driftComponent->reduceForwardSpeedAmount =
                     _mm_shuffle_ps(
-                    { driftComponent->driftParams->otherParams->Reduce_forward_speed_amount },
-                    { driftComponent->driftParams->otherParams->Reduce_forward_speed_amount },
-                    0);
-                driftComponent->maintainEntrySpeedAmount = 
+                        { driftComponent->driftParams->otherParams->Reduce_forward_speed_amount },
+                        { driftComponent->driftParams->otherParams->Reduce_forward_speed_amount },
+                        0);
+                driftComponent->maintainEntrySpeedAmount =
                     _mm_shuffle_ps(
-                    { driftComponent->driftParams->otherParams->Maintain_entry_speed_amount }, 
-                    { driftComponent->driftParams->otherParams->Maintain_entry_speed_amount }, 
-                    0);
+                        { driftComponent->driftParams->otherParams->Maintain_entry_speed_amount },
+                        { driftComponent->driftParams->otherParams->Maintain_entry_speed_amount },
+                        0);
                 driftComponent->driftAngle = { 0,0,0,0 };
                 driftComponent->currentSideForce = { 0,0,0,0 };
                 driftComponent->counterSteeringSideMagnitude = { 0,0,0,0 };
                 driftComponent->angularDamping = { 0,0,0,0 };
-
                 __m128 timeInDrift = _mm_add_ps(driftComponent->timeSpentInDrift, timeStep);
                 driftComponent->timeSpentInDrift = timeInDrift;
 
-                DriftSideForce(nfsVehicle, driftComponent, rigidBody);
+                GetDriftAngle(rigidBody, &bDriftComp, angVelDeg);
+                GetDriftScale(&bDriftComp);
+                DriftSideForce(nfsVehicle, driftComponent, &bDriftComp, rigidBody);
                 DriftSpeedRetention(nfsVehicle, driftComponent, rigidBody);
                 ApplyDriftDamping(nfsVehicle, driftComponent, rigidBody);
+
                 bDriftComp.timeSinceLastDrift = 0;
                 driftComponent->timeSinceLastDrift = _mm_shuffle_ps({ bDriftComp.timeSinceLastDrift }, { bDriftComp.timeSinceLastDrift }, 0);
             }
             else if (!CheckForEnteringDrift(nfsVehicle, driftComponent))
             {
-                bDriftComp.timeSinceLastDrift += GetDeltaTime((uintptr_t)nfsVehicle);
+                bDriftComp.timeSinceLastDrift += GetDeltaTime(nfsVehicle);
                 driftComponent->timeSinceLastDrift = _mm_shuffle_ps({ bDriftComp.timeSinceLastDrift }, { bDriftComp.timeSinceLastDrift }, 0);
                 bDriftComp.yawDamping = { 0,0,0,0 };
                 bDriftComp.angDamping = { 0,0,0,0 };
+
+                GetLocalAngVelDegrees(rigidBody);
+                bDriftComp.driftAngle = 0;
+                bDriftComp.driftScale = 0;
             }
         }
     }
