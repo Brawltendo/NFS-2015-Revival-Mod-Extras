@@ -6,12 +6,58 @@ float map(float s, float a1, float a2, float b1, float b2)
     return b1 + (s - a1) * (b2 - b1) / (a2 - a1);
 }
 
+// Creates a PointGraph from a vector array. The arrays used for this are never greater or less than 10 members.
+PointGraph8 initPointGraph8(__m128 curveData[10])
+{
+	PointGraph8 pgOut{};
+
+	pgOut.min_x = curveData[0].m128_f32[0];
+	pgOut.min_y = curveData[0].m128_f32[1];
+	pgOut.max_x = curveData[1].m128_f32[0];
+	pgOut.max_y = curveData[1].m128_f32[1];
+	float rangeX = curveData[1].m128_f32[0] - curveData[0].m128_f32[0];
+	float rangeY = curveData[1].m128_f32[1] - curveData[0].m128_f32[1];
+	for (int i = 0; i < 8; i++)
+	{
+		pgOut.x[i] = (rangeX * curveData[i + 2].m128_f32[0]) + pgOut.min_x;
+		pgOut.y[i] = (rangeY * curveData[i + 2].m128_f32[1]) + pgOut.min_y;
+	}
+	return pgOut;
+}
+float EvaluatePointGraph8(PointGraph8* pgIn, float xVal)
+{
+	if (xVal < pgIn->x[0]) return pgIn->y[0];
+	if (xVal >= pgIn->x[7]) return pgIn->y[7];
+	float v9 = 0;
+	int v7 = 1;
+	int v8 = 1;
+	if (8 <= 1)
+		return pgIn->y[0];
+	while (1)
+	{
+		v9 = pgIn->x[v8];
+		if (xVal < v9)
+			break;
+		++v8;
+		++v7;
+		if (v8 >= 8)
+			return pgIn->y[0];
+	}
+	int v10 = v7 - 1;
+	float v11 = pgIn->x[v7 - 1];
+	float v12 = v9 - v11;
+	float result = pgIn->y[v7];
+	if (v12 > 0.0)
+		result = ((result - pgIn->y[v7 - 1]) / v12) * (xVal - v11) + pgIn->y[v7 - 1];
+	return result;
+}
+
 float sign(float in, float scale)
 {
     if (in > 0)
-        return 1 * abs(scale);
+        return 1 * fabsf(scale);
     if (in < 0)
-        return -1 * abs(scale);
+        return -1 * fabsf(scale);
     else return 0;
 
 }

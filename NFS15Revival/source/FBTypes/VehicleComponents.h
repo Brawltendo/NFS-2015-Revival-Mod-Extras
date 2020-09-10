@@ -1,6 +1,4 @@
 #pragma once
-//#include "main.h"
-#include "NFSEnums.h"
 #include "ConfigData.h"
 
 class DonutComponent
@@ -25,7 +23,7 @@ public:
 	class DriftParams* driftParams; //0x0020
 	char pad_0028[8]; //0x0028
 	float currentYawTorque; //0x0030
-	int32_t someEnum; //0x0034
+	__int32 someEnum; //0x0034
 	char pad_0038[24]; //0x0038
 	__m128 timeSinceLastDrift; //0x0050
 	__m128 speedInDriftMps; //0x0060
@@ -120,7 +118,7 @@ public:
 	__m128 timeSinceHandbraking; //0x0010
 	bool isHandbrakeOn; //0x0020
 	bool N00010905; //0x0021
-	uint16_t N00010908; //0x0022
+	unsigned __int16 N00010908; //0x0022
 	char pad_0024[12]; //0x0024
 	__m128 timeForTurnComplete; //0x0030
 	__m128 angVelDirection; //0x0040

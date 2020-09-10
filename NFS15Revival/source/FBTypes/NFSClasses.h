@@ -1,7 +1,4 @@
 #pragma once
-
-#include "NFSEnums.h"
-#include "ConfigData.h"
 #include "VehicleComponents.h"
 
 class PointGraph8
@@ -198,9 +195,9 @@ public:
 	float unloadedEngineFriction; //0x081C
 	float revLimiterTime; //0x0820
 	float gearRatioValues[10]; //0x0824
-	int32_t numberOfGearRatiosValues; //0x084C
+	__int32 numberOfGearRatiosValues; //0x084C
 	float gearEfficiencyValues[10]; //0x0850
-	int32_t numberOfGearEfficiencyValues; //0x0878
+	__int32 numberOfGearEfficiencyValues; //0x0878
 	float peakTorqueRPM; //0x087C
 	float clutchSlip; //0x0880
 	float finalGear; //0x0884
@@ -213,11 +210,11 @@ public:
 	PointGraph8 tractionControlScalarVsSlipAngle; //0x08A0
 	PointGraph8 tractionControlScalarVsSpeed; //0x08F0
 	GearID topGear; //0x0940
-	int32_t numberOfShiftUpRPMValues; //0x0944
+	__int32 numberOfShiftUpRPMValues; //0x0944
 	float shiftUpRPMValues[10]; //0x0948
-	int32_t numberOfShiftDownRPMValues; //0x0970
+	__int32 numberOfShiftDownRPMValues; //0x0970
 	float shiftDownRPMValues[10]; //0x0974
-	int32_t numberOfShiftUpSpeedValues; //0x099C
+	__int32 numberOfShiftUpSpeedValues; //0x099C
 	float shiftUpSpeedValues[10]; //0x09A0
 	float minTireTractionToShiftUpFirstGear; //0x09C8
 	float minTireTractionToShiftUp; //0x09CC
@@ -341,7 +338,7 @@ public:
 	float speed; //0x007C
 	float prevFrameSpeed; //0x0080
 	float forwardSpeed; //0x0084
-	uint32_t numberOfSubSteps; //0x0088
+	unsigned __int32 numberOfSubSteps; //0x0088
 	float inputGas; //0x008C
 	float inputSteering; //0x0090
 	float inputBrake; //0x0094
@@ -354,7 +351,7 @@ public:
 	float mass; //0x00A4
 	char pad_00A8[8]; //0x00A8
 	Matrix44 matrix; //0x00B0
-	int16_t driverStyle; //0x00F0
+	__int16 driverStyle; //0x00F0
 	bool isHumanPlayer; //0x00F2
 	bool isTraffic; //0x00F3
 	float slipangle; //0x00F4
@@ -363,7 +360,7 @@ public:
 	bool isABSEnabled; //0x00FD
 	bool isTCSEnabled; //0x00FE
 	bool engineBlown; //0x00FF
-	int32_t blownTires; //0x0100
+	__int32 blownTires; //0x0100
 	bool nosEngaged; //0x0104
 	char pad_0105[3]; //0x0105
 	float nosTorqueMultiplier; //0x0108
@@ -376,7 +373,7 @@ public:
 	char pad_0129[3]; //0x0129
 	float gameBreaker; //0x012C
 	float groundEffect; //0x0130
-	int32_t flags; //0x0134
+	__int32 flags; //0x0134
 	bool isAIControlled; //0x0138
 	bool isAnimationControlled; //0x0139
 	char pad_013A[2]; //0x013A
@@ -472,7 +469,7 @@ public:
 	bool isABSOn[4]; //0x02B0
 	float suspensionDigression[4]; //0x02B4
 	float suspensionLoad[4]; //0x02C4
-	int32_t numberOfWheelsOnGround; //0x02D4
+	__int32 numberOfWheelsOnGround; //0x02D4
 	float steeringRangeLeft; //0x02D8
 	float steeringRangeRight; //0x02DC
 	float steeringSpeed; //0x02E0

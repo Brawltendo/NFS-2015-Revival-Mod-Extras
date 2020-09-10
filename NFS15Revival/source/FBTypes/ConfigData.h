@@ -1,5 +1,5 @@
 #pragma once
-//#include "main.h"
+#include <xmmintrin.h>
 #include "NFSEnums.h"
 
 class GearData
@@ -294,8 +294,8 @@ public:
 	float Slip_angle_for_full_damping_fade; //0x00FC
 	float ExtraFishTailTorque; //0x0100
 	char pad_0104[4]; //0x0104
-	__m128* YawDampeningAtAngle; //0x0108
-	__m128* YawDampeningAtSpeed; //0x0110
+	__m128 (*YawDampeningAtAngle)[10]; //0x0108
+	__m128 (*YawDampeningAtSpeed)[10]; //0x0110
 	float TimeForMaxDonutGripEffect; //0x0118
 	float DonutLongitudinalGripMin; //0x011C
 	float DonutLongitudinalGripMax; //0x0120

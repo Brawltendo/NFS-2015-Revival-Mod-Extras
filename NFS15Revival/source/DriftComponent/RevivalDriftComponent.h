@@ -12,6 +12,8 @@ public:
 };
 
 float map(float s, float a1, float a2, float b1, float b2);
+PointGraph8 initPointGraph8(__m128 curveData[10]);
+float EvaluatePointGraph8(PointGraph8* pgIn, float xVal);
 float sign(float in, float scale);
 float Radians2Degrees(float radian);
 __m128 Radians2DegreesVector(__m128* radian);
@@ -20,5 +22,3 @@ float GetAvgRearSlip(DriftComponent* driftComponent);
 float GetSpeedMph(NFSVehicle* nfsVehicle);
 bool CheckForEnteringDrift(NFSVehicle* nfsVehicle, DriftComponent* driftComp);
 void GetDriftScale(BrawlDriftComponent* driftComp);
-//void DriftSideForce(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RaceRigidBody* chassis);
-//void ApplyDriftDamping(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RaceRigidBody* chassis);
