@@ -24,6 +24,9 @@
     <ClCompile Include="source\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="source\DriftComponent\PerformanceModification\PerformanceModification.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\DriftComponent\RevivalDriftComponent.h">
@@ -48,6 +51,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="source\pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DriftComponent\PerformanceModification\PerformanceModification.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -4,8 +4,6 @@
 #include <fvec.h>
 #include <iostream>
 #include <vector>
-#include <emmintrin.h>
-#include "FBTypes\NFSClasses.h"
 
 using namespace std;
 

@@ -17,7 +17,6 @@ typedef void(__fastcall* _UpdateDriftAngleDegrees)(DriftComponent* const driftCo
 typedef void(__fastcall* _UpdateSideForce)(DriftComponent* driftComp, __m128* lvfAbsDriftScale, class RaceCarPhysicsObject* lpRaceCar, __m128* lvfSteeringInput, __m128* lvfAverageSurfaceGripFactor, __m128* lvfTimeStep);
 typedef void(__fastcall* _ApplyDamping)(DriftComponent* driftComp, __m128* lvfAverageSurfaceGripFactor, __m128* lvfDampingScale, __m128* lvfTimeStep);
 typedef void(__fastcall* _ApplyDriftForces)(DriftComponent* const driftComp, __m128* lvfGasInput, __m128* lvfBrakeInput, __m128* lvfSteeringInput, __m128* lvfAbsDriftScale, HandbrakeComponent* lpHandbrake, class RaceCarPhysicsObject* lpRaceCar, float lfSpeedMPS, __m128* lvfAverageSurfaceGripFactor, __m128* lvfTimeStep, __m128* lvfInvTimeStep);
-typedef float(__fastcall* _calcSteeringFromPitchAndYaw)(const NFSVehicle* const nfsVehicle, float pitch, float yaw);
 
 _initPointGraph8FromCurveData initPointGraph8FromCurveData = (_initPointGraph8FromCurveData)0x1441B7BF0;
 _PointGraph8__Evaluate PointGraph8__Evaluate = (_PointGraph8__Evaluate)0x143F6A8E0;
@@ -32,7 +31,6 @@ _UpdateDriftAngleDegrees UpdateDriftAngleDegrees = (_UpdateDriftAngleDegrees)0x1
 _UpdateSideForce UpdateSideForce = (_UpdateSideForce)0x144197FC0;
 _ApplyDriftForces ApplyDriftForces = (_ApplyDriftForces)0x144193890;
 _ApplyDamping ApplyDamping = (_ApplyDamping)0x1441935E0;
-_calcSteeringFromPitchAndYaw calcSteeringFromPitchAndYaw = (_calcSteeringFromPitchAndYaw)0x144173270;
 #endif // NFS_NATIVE_FUNCTIONS
 
 uintptr_t FindDMAAddy(HANDLE hProc, uintptr_t ptr, std::vector<unsigned int> offsets)
@@ -65,12 +63,11 @@ float GetLocalAngVelDegrees(RaceRigidBody* chassis)
     return Radians2Degrees(localAngVelFinal.m128_f32[0]);
 }
 
-void GetDriftAngle(RaceRigidBody* chassis, BrawlDriftComponent* driftComp, float lastAngVel)
+void UpdateDriftAngle(RaceRigidBody* chassis, DriftComponent* driftComp, BrawlDriftComponent* bDrift)
 {
-    float angVelDeg = GetLocalAngVelDegrees(chassis);
-
-    float currentDriftAngle = (fabsf(angVelDeg) - fabsf(lastAngVel)) * sign(angVelDeg, 1);
-    driftComp->driftAngle = currentDriftAngle;
+    UpdateDriftAngleDegrees(driftComp);
+    bDrift->driftAngle = sign(GetLocalAngVelDegrees(chassis), 1) * driftComp->driftAngle.m128_f32[0];
+    // Debug("driftAngle: %f\n", bDrift->driftAngle);
 }
 
 void DriftSideForce(NFSVehicle* nfsVehicle, DriftComponent* driftComp, BrawlDriftComponent* bDrift, RaceRigidBody* chassis)
@@ -120,10 +117,10 @@ void SteerSameDirectionTorque(NFSVehicle* nfsVehicle, DriftComponent* driftComp,
     {
         /*.min_x*/ 0,
         /*.min_y*/ 0,
-        /*.max_x*/ 5.5,
+        /*.max_x*/ 5.5f,
         /*.max_y*/ 1,
-        /*.x*/ { 0, 0.4, 0.55, 0.86, 1.02, 2.25, 3.52, 5.5 },
-        /*.y*/ { 0, 0.1, 0.15, 0.28, 0.45, 0.675, 0.88, 1 }
+        /*.x*/ { 0, 0.4f, 0.55f, 0.86f, 1.02f, 2.25f, 3.52f, 5.5f },
+        /*.y*/ { 0, 0.1f, 0.15f, 0.28f, 0.45f, 0.675f, 0.88f, 1 }
     };
 
     float sameDirMul =
@@ -131,7 +128,7 @@ void SteerSameDirectionTorque(NFSVehicle* nfsVehicle, DriftComponent* driftComp,
         bDrift->timeSteeringRight > 0 ? EvaluatePointGraph8(&pgSteerSameDirFactor, bDrift->timeSteeringRight) : 0;
 
     // Do this to stop the shimmy thing that happens with vanilla DriftComponent's yaw torque, instead halve the amount of torque applied when countersteering.
-    float countersteerTorqueMul = driftComp->counterSteeringInDrift ? 0.5 : 1;
+    float countersteerTorqueMul = driftComp->counterSteeringInDrift ? 0.5f : 1;
 
     float torque = yawTorque * sameDirMul * countersteerTorqueMul * nfsVehicle->vehicleInput->steeringInput.X;
 
@@ -196,24 +193,19 @@ DWORD WINAPI Start(LPVOID lpParam)
     Debug("gameMainAddress: %I64X\n", game);
     BrawlDriftComponent bDriftComp{};
 
-    Debug("initPointGraph8FromCurveData: %I64X\n", initPointGraph8FromCurveData);
-    Debug("PointGraph8::Evaluate: %I64X\n", PointGraph8__Evaluate);
     Debug("AddWorldCOMForceLogged: %I64X\n", AddWorldCOMForceLogged);
     Debug("DampPitchYawRoll: %I64X\n", DampPitchYawRoll);
     Debug("GetTransform: %I64X\n", GetTransform);
     Debug("GetAngularVelocity: %I64X\n", GetAngularVelocity);
     Debug("MaintainDriftSpeed: %I64X\n", MaintainDriftSpeed);
     Debug("UpdateDriftAngleDegrees: %I64X\n", UpdateDriftAngleDegrees);
-    Debug("UpdateSideForce: %I64X\n", UpdateSideForce);
-    Debug("ApplyDriftForces: %I64X\n", ApplyDriftForces);
     Debug("ApplyDamping: %I64X\n", ApplyDamping);
-    Debug("calcSteeringFromPitchAndYaw: %I64X\n", calcSteeringFromPitchAndYaw);
 
     while (1)
     {
         nfsVehicle = (NFSVehicle*)FindDMAAddy(GetCurrentProcess(), nfsVehicleBase, { 0x28, 0x20, 0x0, 0xD8, 0x0 });
-        
-        /* 
+
+        /*
         Uncomment block to allow adding force upwards by pressing numpad 8, useful for exploring out of bounds and making other players say WTF
         if (GetAsyncKeyState(VK_NUMPAD8))
         {
@@ -232,14 +224,17 @@ DWORD WINAPI Start(LPVOID lpParam)
 
         // Check to see whether or not the NFSVehicle pointer is valid
         float nfsVehicleChecker;
+        float nfsVehicleChecker1;
         ReadProcessMemory(GetCurrentProcess(), (BYTE*)(uintptr_t)nfsVehicle + 0x64, &nfsVehicleChecker, sizeof(nfsVehicleChecker), nullptr);
+        ReadProcessMemory(GetCurrentProcess(), (BYTE*)(uintptr_t)nfsVehicle + 0x68, &nfsVehicleChecker1, sizeof(nfsVehicleChecker1), nullptr);
 
         driftComponent = (DriftComponent*)FindDMAAddy(GetCurrentProcess(), nfsVehicleBase, { 0x28, 0x20, 0x0, 0xD8, 0x118, 0xE80, 0x0 }); //nfsVehicle + 0x11A8; nfsVehicle->driftComponent;
 
-        if (nfsVehicleChecker == 150 && nfsVehicle->driftComponent != NULL)
+        if (nfsVehicleChecker == 150 && nfsVehicleChecker1 == 10)
         {
             float angVelDeg{};
             RaceRigidBody* rigidBody = (RaceRigidBody*)FindDMAAddy(GetCurrentProcess(), (uintptr_t)driftComponent + 0x18, { 0x0 }); //nfsVehicle->raceRigidBody;
+            bDriftComp.timeApplyingChainDriftDamping = driftComponent->driftParams->driftTriggerParams->Brake_stab_return_speed;
 
             if (CheckForEnteringDrift(nfsVehicle, driftComponent))
             {
@@ -248,6 +243,7 @@ DWORD WINAPI Start(LPVOID lpParam)
                 float speedMph = GetSpeedMph(nfsVehicle);
 
                 driftComponent->timeSpentInDrift = { 0,0,0,0 };
+                bDriftComp.chainedDriftDampingFactor = driftComponent->driftParams->driftTriggerParams->Starting_drift_scale_after_scandinavian_flick;
                 driftComponent->reduceForwardSpeedAmount =
                     _mm_shuffle_ps(
                         { driftComponent->driftParams->otherParams->Reduce_forward_speed_amount },
@@ -267,8 +263,8 @@ DWORD WINAPI Start(LPVOID lpParam)
                 bDriftComp.timeSteeringLeft = nfsVehicle->vehicleInput->steeringInput.X > 0 ? bDriftComp.timeSteeringLeft + timeStep.m128_f32[0] : 0;
                 bDriftComp.timeSteeringRight = nfsVehicle->vehicleInput->steeringInput.X < 0 ? bDriftComp.timeSteeringRight + timeStep.m128_f32[0] : 0;
 
-                GetDriftAngle(rigidBody, &bDriftComp, angVelDeg);
-                GetDriftScale(&bDriftComp);
+                UpdateDriftAngle(rigidBody, driftComponent, &bDriftComp);
+                SetDriftScale(&bDriftComp);
                 DriftSideForce(nfsVehicle, driftComponent, &bDriftComp, rigidBody);
                 DriftSpeedRetention(nfsVehicle, driftComponent, rigidBody);
                 SteerSameDirectionTorque(nfsVehicle, driftComponent, &bDriftComp, rigidBody, timeStep);
@@ -279,7 +275,8 @@ DWORD WINAPI Start(LPVOID lpParam)
             }
             else if (!CheckForEnteringDrift(nfsVehicle, driftComponent))
             {
-                bDriftComp.timeSinceLastDrift += GetDeltaTime(nfsVehicle);
+                __m128 timeStep = _mm_shuffle_ps({ GetDeltaTime(nfsVehicle) }, { GetDeltaTime(nfsVehicle) }, 0);
+                bDriftComp.timeSinceLastDrift += timeStep.m128_f32[0];
                 driftComponent->timeSinceLastDrift = _mm_shuffle_ps({ bDriftComp.timeSinceLastDrift }, { bDriftComp.timeSinceLastDrift }, 0);
                 bDriftComp.timeSteeringLeft = 0;
                 bDriftComp.timeSteeringRight = 0;
@@ -289,6 +286,14 @@ DWORD WINAPI Start(LPVOID lpParam)
                 GetLocalAngVelDegrees(rigidBody);
                 bDriftComp.driftAngle = 0;
                 bDriftComp.driftScale = 0;
+                while (bDriftComp.timeSinceLastDrift <= bDriftComp.timeApplyingChainDriftDamping && bDriftComp.chainedDriftDampingFactor != 0)
+                {
+                    bDriftComp.chainedDriftDampingFactor -= timeStep.m128_f32[0];
+                    if (bDriftComp.chainedDriftDampingFactor < 0)
+                        bDriftComp.chainedDriftDampingFactor = 0;
+                    __m128 chainedDriftDamping = _mm_shuffle_ps({ bDriftComp.chainedDriftDampingFactor }, { bDriftComp.chainedDriftDampingFactor }, 0);
+                    ApplyDamping(driftComponent, &_mm_shuffle_ps({ 1 }, { 1 }, 0), &chainedDriftDamping, &timeStep);
+                }
             }
         }
     }

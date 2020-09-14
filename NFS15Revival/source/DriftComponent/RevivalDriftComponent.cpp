@@ -68,12 +68,11 @@ float Radians2Degrees(float radian) {
     return(radian * (180 / pi));
 }
 
-// For some reason this is the only var I've run into that can't just directly be grabbed from the original object. Weird.
+// For some reason this is the only var I've run into that can't just directly be grabbed using the recreated class. Weird.
 float GetDeltaTime(NFSVehicle* nfsVehicle)
 {
     float dT;
     ReadProcessMemory(GetCurrentProcess(), (BYTE*)nfsVehicle + 0xE78, &dT, sizeof(dT), nullptr);
-    /*deltaTime = nfsVehicle + 0xE78*/
     return dT;
 }
 
@@ -96,7 +95,15 @@ bool CheckForEnteringDrift(NFSVehicle* nfsVehicle, DriftComponent* driftComp)
     return fabsf(GetSpeedMph(nfsVehicle)) >= minSpeedToEnterDrift && fabsf(avgSlipAng) >= slipToEnterDrift;
 }
 
-void GetDriftScale(BrawlDriftComponent* driftComp)
+void SetDriftScale(BrawlDriftComponent* driftComp)
 {
     driftComp->driftScale = map(driftComp->driftAngle, -80, 80, -1, 1);
+}
+
+bool IsChainingDrift(DriftComponent* driftComp, BrawlDriftComponent* bDrift)
+{
+	//if (bDrift->currentDriftDirection * bDrift->lastDriftDirection < 0) // && (bDrift->timeChainingDrift > 0 && bDrift->timeChainingDrift <= 1.5))
+	if (bDrift->timeSinceLastDrift <= 1.75)
+		return true;
+	else return false;
 }

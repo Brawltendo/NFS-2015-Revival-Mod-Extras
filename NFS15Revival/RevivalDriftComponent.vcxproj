@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\DriftComponent\PerformanceModification\PerformanceModification.cpp" />
     <ClCompile Include="source\DriftComponent\RevivalDriftComponent.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -27,6 +28,7 @@
     <ClCompile Include="source\pch.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\DriftComponent\PerformanceModification\PerformanceModification.h" />
     <ClInclude Include="source\DriftComponent\RevivalDriftComponent.h" />
     <ClInclude Include="source\FBTypes\ConfigData.h" />
     <ClInclude Include="source\FBTypes\NFSClasses.h" />

@@ -1,5 +1,6 @@
 #pragma once
-#include "main.h"
+#include <corecrt_math.h>
+#include "PerformanceModification\PerformanceModification.h"
 
 class BrawlDriftComponent
 {
@@ -11,6 +12,8 @@ public:
 	float driftAngle;
 	float timeSteeringLeft;
 	float timeSteeringRight;
+	float timeApplyingChainDriftDamping;
+	float chainedDriftDampingFactor;
 };
 
 float map(float s, float a1, float a2, float b1, float b2);
@@ -22,4 +25,5 @@ float GetDeltaTime(NFSVehicle* nfsVehicle);
 float GetAvgRearSlip(DriftComponent* driftComponent);
 float GetSpeedMph(NFSVehicle* nfsVehicle);
 bool CheckForEnteringDrift(NFSVehicle* nfsVehicle, DriftComponent* driftComp);
-void GetDriftScale(BrawlDriftComponent* driftComp);
+void SetDriftScale(BrawlDriftComponent* driftComp);
+bool IsChainingDrift(DriftComponent* driftComp, BrawlDriftComponent* bDrift);

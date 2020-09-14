@@ -128,6 +128,12 @@ public:
 	class PerformanceModificationComponent* perfModComponent; //0x0070
 }; //Size: 0x0078
 
+class PerformanceModificationComponent
+{
+public:
+
+};
+
 class SteeringComponent
 {
 public:
