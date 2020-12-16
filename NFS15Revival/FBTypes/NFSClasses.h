@@ -21,6 +21,16 @@ public:
 	class PointGraph8 Rear; //0x0050
 }; //Size: 0x00A0
 
+class LinearTransform
+{
+public:
+	__m128 right; //0x0000
+	__m128 up; //0x0010
+	__m128 forward; //0x0020
+	__m128 trans; //0x0030
+}; //Size: 0x0040
+static_assert(sizeof(LinearTransform) == 0x40, "LinearTransform");
+
 struct Vector2
 {
 	float X;
@@ -341,7 +351,7 @@ public:
 	float speed; //0x007C
 	float prevFrameSpeed; //0x0080
 	float forwardSpeed; //0x0084
-	unsigned __int32 numberOfSubSteps; //0x0088
+	uint32_t numberOfSubSteps; //0x0088
 	float inputGas; //0x008C
 	float inputSteering; //0x0090
 	float inputBrake; //0x0094
@@ -354,7 +364,7 @@ public:
 	float mass; //0x00A4
 	char pad_00A8[8]; //0x00A8
 	Matrix44 matrix; //0x00B0
-	__int16 driverStyle; //0x00F0
+	int16_t driverStyle; //0x00F0
 	bool isHumanPlayer; //0x00F2
 	bool isTraffic; //0x00F3
 	float slipangle; //0x00F4
@@ -363,7 +373,7 @@ public:
 	bool isABSEnabled; //0x00FD
 	bool isTCSEnabled; //0x00FE
 	bool engineBlown; //0x00FF
-	__int32 blownTires; //0x0100
+	int32_t blownTires; //0x0100
 	bool nosEngaged; //0x0104
 	char pad_0105[3]; //0x0105
 	float nosTorqueMultiplier; //0x0108
@@ -376,7 +386,7 @@ public:
 	char pad_0129[3]; //0x0129
 	float gameBreaker; //0x012C
 	float groundEffect; //0x0130
-	__int32 flags; //0x0134
+	int32_t flags; //0x0134
 	bool isAIControlled; //0x0138
 	bool isAnimationControlled; //0x0139
 	char pad_013A[2]; //0x013A
@@ -429,95 +439,93 @@ public:
 	float landingStabilityScale; //0x0338
 	float burnoutScale; //0x033C
 }; //Size: 0x0340
+static_assert(sizeof(InputState) == 0x340, "InputState error");
 
-class OutputState
+
+struct OutputState
 {
-public:
-	__m128 forceAppliedToCar; //0x0000
-	__m128 torqueAppliedToCar; //0x0010
-	__m128 linearImpulse; //0x0020
-	__m128 angularImpulse; //0x0030
-	__m128 aeroSideForce; //0x0040
-	__m128 aeroDownForce; //0x0050
-	__m128 aeroDragForce; //0x0060
-	__m128 aeroDownCenter; //0x0070
-	__m128 aeroSideCenter; //0x0080
-	__m128 aeroDragCenter; //0x0090
-	__m128 aeroDragTorque; //0x00A0
-	__m128 localCOG; //0x00B0
-	__m128 tireLateralNormal[4]; //0x00C0
-	__m128 tireSteeringNormal[4]; //0x0100
-	__m128 world_wheelTirePatchPosition[4]; //0x0140
-	__m128 local_wheelTirePatchPosition[4]; //0x0180
-	__m128 local_wheelMountPosition[4]; //0x01C0
-	float local_steeringWheelAngles[2]; //0x0200
-	float suspensionCompression[4]; //0x0208
-	bool suspensionIsAtRest; //0x0218
-	char pad_0219[3]; //0x0219
-	float speedometer; //0x021C
-	float maxSpeedometer; //0x0220
-	bool vehicleIsAsleep; //0x0224
-	char pad_0225[3]; //0x0225
-	float wheelieAngle; //0x0228
-	bool staticResetConditionMet; //0x022C
-	char pad_022D[3]; //0x022D
-	float tireTraction[4]; //0x0230
-	float tireSlipRatio[4]; //0x0240
-	float tireLongSlip[4]; //0x0250
-	float tireSlipAngle[4]; //0x0260
-	float tireRadius[4]; //0x0270
-	float tireLateralVelocity[4]; //0x0280
-	float tireAngularVelocity[4]; //0x0290
-	float tireLateralForce[4]; //0x02A0
-	bool isABSOn[4]; //0x02B0
-	float suspensionDigression[4]; //0x02B4
-	float suspensionLoad[4]; //0x02C4
-	__int32 numberOfWheelsOnGround; //0x02D4
-	float steeringRangeLeft; //0x02D8
-	float steeringRangeRight; //0x02DC
-	float steeringSpeed; //0x02E0
-	float ffbTorque; //0x02E4
-	float maxHorsePower; //0x02E8
-	float maxHorsePowerRPM; //0x02EC
-	float minHorsePower; //0x02F0
-	float currentHorsePower; //0x02F4
-	float engineRpm; //0x02F8
-	float driveShaftRpm; //0x02FC
-	float peakTorque; //0x0300
-	float peakTorqueRPM; //0x0304
-	float throttle; //0x0308
-	float clutch; //0x030C
-	ClutchState clutchState; //0x0310
-	float torqueRatio; //0x0314
-	float clutchGrind; //0x0318
-	float forcedIndSpool; //0x031C
-	float forcedIndCurrentPSI; //0x0320
-	float forcedIndRelativeTorqueGain; //0x0324
-	float forcedIndByPassPosition; //0x0328
-	bool forcedIndIsBlowoffOpened; //0x032C
-	bool forcedIndIsWestgateOpened; //0x032D
-	bool isGearChanging; //0x032E
-	char pad_032F[1]; //0x032F
-	ShiftStatus shiftStatus; //0x0330
-	ShiftPotential shiftPotential; //0x0334
-	float totalShiftTime; //0x0338
-	float timeUntiTransition; //0x033C
-	float shiftUpRpm; //0x0340
-	float shiftDownRpm; //0x0344
-	GearID gear; //0x0348
-	float torqueSplit; //0x034C
-	float engineTorque; //0x0350
-	float driveShaftTorque; //0x0354
-	float draftGauge; //0x0358
-	float draftSlingshot; //0x035C
-	bool draftHasFilledGauge; //0x0360
-	char pad_0361[3]; //0x0361
-	float unk; //0x0364
-	float wheelSteeringAngleRadians; //0x0368
-	float wheelVisualSteeringAngleRadians; //0x036C
-	float steeringScale; //0x0370
-	float revLimiterTimeLeft; //0x0374
-}; //Size: 0x0378
+	__m128 forceAppliedToCar;
+	__m128 torqueAppliedToCar;
+	__m128 linearImpulse;
+	__m128 angularImpulse;
+	__m128 aeroSideForce;
+	__m128 aeroDownForce;
+	__m128 aeroDragForce;
+	__m128 aeroDownCenter;
+	__m128 aeroSideCenter;
+	__m128 aeroDragCenter;
+	__m128 aeroDragTorque;
+	__m128 localCOG;
+	__m128 tireLateralNormal[4];
+	__m128 tireSteeringNormal[4];
+	__m128 world_wheelTirePatchPosition[4];
+	__m128 local_wheelTirePatchPosition[4];
+	__m128 local_wheelMountPosition[4];
+	float local_steeringWheelAngles[2];
+	float suspensionCompression[4];
+	bool suspensionIsAtRest;
+	float speedometer;
+	float maxSpeedometer;
+	bool vehicleIsAsleep;
+	float wheelieAngle;
+	bool staticResetConditionMet;
+	float tireTraction[4];
+	float tireSlipRatio[4];
+	float tireLongSlip[4];
+	float tireSlipAngle[4];
+	float tireRadius[4];
+	float tireLateralVelocity[4];
+	float tireAngularVelocity[4];
+	float tireLateralForce[4];
+	bool isABSOn[4];
+	float suspensionDigression[4];
+	float suspensionLoad[4];
+	int numberOfWheelsOnGround;
+	float steeringRangeLeft;
+	float steeringRangeRight;
+	float steeringSpeed;
+	float ffbTorque;
+	float maxHorsePower;
+	float maxHorsePowerRPM;
+	float minHorsePower;
+	float currentHorsePower;
+	float engineRpm;
+	float driveShaftRpm;
+	float peakTorque;
+	float peakTorqueRPM;
+	float throttle;
+	float clutch;
+	ClutchState clutchState;
+	float torqueRatio;
+	float clutchGrind;
+	float forcedIndSpool;
+	float forcedIndCurrentPSI;
+	float forcedIndRelativeTorqueGain;
+	float forcedIndByPassPosition;
+	bool forcedIndIsBlowoffOpened;
+	bool forcedIndIsWestgateOpened;
+	bool isGearChanging;
+	ShiftStatus shiftStatus;
+	ShiftPotential shiftPotential;
+	float totalShiftTime;
+	float timeUntilTransition;
+	float shiftUpRpm;
+	float shiftDownRpm;
+	GearID gear;
+	float torqueSplit;
+	float engineTorque;
+	float driveShaftTorque;
+	float draftGauge;
+	float draftSlingshot;
+	bool draftHasFilledGauge;
+	char pad_0361[3];
+	bool aeroDraftHasFilledGauge;
+	float wheelSteeringAngleRadians;
+	float wheelVisualSteeringAngleRadians;
+	float steeringScale;
+	float revLimiterTimeLeft;
+};
+static_assert(sizeof(OutputState) == 0x380, "OutputState error");
 
 class VehicleInput
 {
@@ -532,63 +540,286 @@ public:
 	char pad_0038[80]; //0x0038
 }; //Size: 0x0088
 
+class ForceFeedbackData
+{
+public:
+	float forceFeedback; //0x0000
+	float forceCentre; //0x0004
+	float forceDamp; //0x0008
+	float forceCollision; //0x000C
+	float surfaceIceEffect; //0x0010
+	float surfaceMagnitude; //0x0014
+	float surfacePeriod; //0x0018
+	float rpmLED; //0x001C
+	bool inAir; //0x0020
+	char pad_0021[3]; //0x0021
+}; //Size: 0x0024
+static_assert(sizeof(ForceFeedbackData) == 0x24, "ForceFeedbackData error");
+
+class Spring
+{
+public:
+	float position; //0x0000
+	float velocity; //0x0004
+	float wheelSpringLowerLimit; //0x0008
+	float wheelSpringUpperLimit; //0x000C
+	float reciprocalWheelSpringMass; //0x0010
+	float wheelSpringCoefficient; //0x0014
+	float outDamping; //0x0018
+	float inDamping; //0x001C
+}; //Size: 0x0020
+static_assert(sizeof(Spring) == 0x20, "Spring error");
+
+class VehicleGroundData
+{
+public:
+	Matrix44 transform; //0x0000
+	__m128 velocity; //0x0040
+	__m128 lastVelocity; //0x0050
+	__m128 avgGroundNormal; //0x0060
+	__m128 lastRoadPos; //0x0070
+	__m128 groundPos[4]; //0x0080
+	__m128 groundNormal[4]; //0x00C0
+	float averageDriveGrip; //0x0100
+	bool isgroundValid[4]; //0x0104
+	bool allarevalid; //0x0108
+	bool avgGroundValid; //0x0109
+	bool isOnRoughGround; //0x010A
+	bool justLanded; //0x010B
+	char pad_010C[4]; //0x010C
+}; //Size: 0x0110
+static_assert(sizeof(VehicleGroundData) == 0x110, "VehicleGroundData error");
+
+class VehiclePhysicsJob_Input
+{
+public:
+	float dT; //0x0000
+	uint32_t ppuRaceCarSize; //0x0004
+	class RaceCar* ppuRaceCar; //0x0008
+	class InputState* ppuInputState; //0x0010
+	class TuningState* ppuTuningState; //0x0018
+}; //Size: 0x0020
+static_assert(sizeof(VehiclePhysicsJob_Input) == 0x20, "VehiclePhysicsJob_Input");
+
+//__declspec(align(8))
 class NFSVehicle
 {
 public:
-	RaceVehicleConfigData* vehicleConfig; //0x0000
+	class RaceVehicleConfigData* m_data; //0x0000
 	char pad_0008[16]; //0x0008
-	VehicleInput* vehicleInput; //0x0018
-	class PointerToWheelData* pWheelData; //0x0020
-	char pad_0028[128]; //0x0028
+	class VehicleInput* m_input; //0x0018
+	class WheelsNFS* m_wheels; //0x0020
+	char pad_0028[60]; //0x0028
+	float m_speedCheatValue; //0x0064
+	float m_jumpCheatValue; //0x0068
+	char pad_006C[60]; //0x006C
 	class N00003CA7* N00002FB5; //0x00A8
 	char pad_00B0[16]; //0x00B0
 	class DynamicPhysicsEntity* dynamicPhysEnt; //0x00C0
 	char pad_00C8[32]; //0x00C8
-	class SimplePhysicsEntity* simplePhysEnt; //0x00E8
+	class RigidBody* rigidBody; //0x00E8
 	char pad_00F0[40]; //0x00F0
 	class PointerToRaceCar* pointerToRaceCar; //0x0118
-	char pad_0120[592]; //0x0120
+	char pad_0120[520]; //0x0120
+	int32_t m_vehicleNetworkType; //0x0328
+	VehicleMode m_vehicleMode; //0x032C
+	float m_vehicleModeChangeTimer; //0x0330
+	float m_sideSlipAngle; //0x0334
+	float m_sideSlipAmount; //0x0338
+	float m_sideSlipAngleCorrect; //0x033C
+	float m_timeInDrift; //0x0340
+	float m_speedAwayFromGround; //0x0344
+	float m_naturalAirExpectedTimer; //0x0348
+	float m_timeFullGasInput; //0x034C
+	bool m_useInputFilter; //0x0350
+	char pad_0351[31]; //0x0351
 	class VehicleCollisionCallbacks* vehicleCollisionCallbacks; //0x0370
-	char pad_0378[120]; //0x0378
-	float mass; //0x03F0
-	char pad_03F4[44]; //0x03F4
-	float speedMps; //0x0420
-	char pad_0424[68]; //0x0424
-	class RaceCar* raceCar; //0x0468
-	InputState inputState; //0x0470
-	OutputState outputState; //0x07B0
-	char pad_0B28[400]; //0x0B28
-	bool isABSEnabled; //0x0CB8
-	bool isTCSEnabled; //0x0CB9
-	char pad_0CBA[82]; //0x0CBA
-	NFSVehicleState vehicleState; //0x0D0C
-	char pad_0D10[360]; //0x0D10
-	float deltaTime; //0x0E78
-	float motionScalar; //0x0E7C
-	char pad_0E80[224]; //0x0E80
-	float landingStabilityScale; //0x0F60
-	float timeInAir; //0x0F64
-	float timeSinceLastAirTime; //0x0F68
-	char pad_0F6C[320]; //0x0F6C
-	PointGraph8 N00003DC1; //0x10AC
-	PointGraph8 N00003DCB; //0x10FC
+	char pad_0378[56]; //0x0378
+	__m128 m_inertiaTensorVehiclePhysics; //0x03B0
+	__m128 m_inertiaTensorCollision; //0x03C0
+	__m128 m_inertiaTensorTumbling; //0x03D0
+	__m128 m_originalInertiaTensor; //0x03E0
+	float m_originalMass; //0x03F0
+	char pad_03F4[32]; //0x03F4
+	float m_speed; //0x0414
+	float m_prevFrameSpeed; //0x0418
+	float m_prevFrameSteeringAngle; //0x041C
+	float m_forwardSpeed; //0x0420
+	char pad_0424[4]; //0x0424
+	float N0000F73C; //0x0428
+	char pad_042C[4]; //0x042C
+	__m128 m_localAngularAcceleration; //0x0430
+	char pad_0440[40]; //0x0440
+	class RaceCar* m_raceCar; //0x0468
+	class InputState m_raceCarInputState; //0x0470
+	struct OutputState m_raceCarOutputState; //0x07B0
+	char pad_0B28[8]; //0x0B28
+	class VehicleGroundData m_grounddata; //0x0B40
+	bool requestMatchSpeed; //0x0C50
+	char pad_0C51[3]; //0x0C51
+	float m_requestMatchSpeed_Speed; //0x0C54
+	bool m_isExternallyControlled; //0x0C58
+	bool m_isAnimationControlled; //0x0C59
+	bool m_isAnimationGeneric; //0x0C5A
+	bool m_isRemotelyControlled; //0x0C5B
+	bool m_isNetworkedPlayer; //0x0C5C
+	bool m_updateCollisionFilterOnEntity; //0x0C5D
+	char pad_0C5E[2]; //0x0C5E
+	int32_t m_vehicleEntityType; //0x0C60
+	uint32_t m_tiresStatesMask; //0x0C64
+	char pad_0C68[72]; //0x0C68
+	bool m_isResetting; //0x0CB0
+	bool m_vehicleCollisionsDisabled; //0x0CB1
+	bool m_allCollisionsDisabled; //0x0CB2
+	bool m_physicsDisabled; //0x0CB3
+	bool m_isTotalled; //0x0CB4
+	bool m_isJustTotalled; //0x0CB5
+	bool m_requestTotalled; //0x0CB6
+	bool m_autoStopEnabled; //0x0CB7
+	bool m_isABSEnabled; //0x0CB8
+	bool m_isTCSEnabled; //0x0CB9
+	char pad_0CBA[2]; //0x0CBA
+	GearID m_maxGear; //0x0CBC
+	float m_maxRPM; //0x0CC0
+	float m_idleRPM; //0x0CC4
+	float m_rideHeight; //0x0CC8
+	float m_resetTimer; //0x0CCC
+	float m_snapToGroundTimer; //0x0CD0
+	float m_hitHumanVehicleTimer; //0x0CD4
+	float m_collisionTimer; //0x0CD8
+	uint32_t m_activeCollisionFlags; //0x0CDC
+	uint32_t m_activeVehicleCollisionFlags; //0x0CE0
+	float m_VehicleCollisionTimer; //0x0CE4
+	float m_stoppedTime; //0x0CE8
+	float m_aiAggressiveTimer; //0x0CEC
+	bool m_transitionToIgnition; //0x0CF0
+	bool m_ignition; //0x0CF1
+	char pad_0CF2[2]; //0x0CF2
+	float m_ignitionTimer; //0x0CF4
+	float m_ignitionSequenceLength; //0x0CF8
+	float m_resetTime; //0x0CFC
+	float m_cruisingGearboxRedlineScalar; //0x0D00
+	char pad_0D04[4]; //0x0D04
+	NFSVehicleState m_lastVehicleState; //0x0D08
+	NFSVehicleState m_vehicleState; //0x0D0C
+	VehicleCollisionBody m_currentCollisionBody; //0x0D10
+	VehicleCollisionBody m_currentCollisionBodyOnGround; //0x0D14
+	VehicleCollisionBody m_currentCollisionBodyCrashing; //0x0D18
+	char pad_0D1C[4]; //0x0D1C
+	__m128 m_lastLinearVelocity; //0x0D20
+	__m128 m_lastLocalAngularVelocity; //0x0D30
+	__m128 m_lastLocalComPos; //0x0D40
+	float m_vehicleStateTime; //0x0D50
+	char pad_0D54[12]; //0x0D54
+	class LinearTransform m_xCarTransform; //0x0D60
+	class LinearTransform m_xCarTransformLocal; //0x0DA0
+	class LinearTransform m_bodyTransformLocal; //0x0DE0
+	__m128 m_wheelPenetrationDistance; //0x0E20
+	__m128 m_xCarOrientation; //0x0E30
+	float m_xCarScale; //0x0E40
+	char pad_0E44[12]; //0x0E44
+	__m128 m_xCarDelta; //0x0E50
+	__m128 m_xCarDeltaAxisAngle; //0x0E60
+	float m_xCarBlend; //0x0E70
+	float m_fadeTime; //0x0E74
+	float m_currentUpdateDt; //0x0E78
+	float m_currentUpdateTimeScale; //0x0E7C
+	float m_timeDeltaScalar; //0x0E80
+	char pad_0E84[88]; //0x0E84
+	class ForceFeedbackData m_forceFeedbackData; //0x0EDC
+	uint32_t m_collisionFlags; //0x0F00
+	float m_collisionSpeedDelta; //0x0F04
+	float m_timeDrifting; //0x0F08
+	float m_carSlipAngle; //0x0F0C
+	float m_draftingGauge; //0x0F10
+	float m_draftingSlingshot; //0x0F14
+	float m_rpmToMaxRatio; //0x0F18
+	float m_steeringOutputDirection; //0x0F1C
+	GearID m_topGear; //0x0F20
+	char pad_0F24[4]; //0x0F24
+	float m_nosGripIncrease; //0x0F28
+	float m_nosStrengthScalar; //0x0F2C
+	float m_nosRebuildPacingScalar; //0x0F30
+	float m_nosTorqueMultiplier; //0x0F34
+	float m_nosForce; //0x0F38
+	char pad_0F3C[4]; //0x0F3C
+	__m128 m_nosForceLocalPosition; //0x0F40
+	bool m_nosEngaged; //0x0F50
+	char pad_0F51[3]; //0x0F51
+	float m_extraBrakeForce; //0x0F54
+	bool m_extraBrakeEngaged; //0x0F58
+	char pad_0F59[3]; //0x0F59
+	float m_backwardsExtraBrakeStrength; //0x0F5C
+	float m_landingStabilityScale; //0x0F60
+	float m_timeAirborne; //0x0F64
+	float m_timeOnGround; //0x0F68
+	bool m_justLanded; //0x0F6C
+	bool m_targetEnabled; //0x0F6D
+	char pad_0F6E[2]; //0x0F6E
+	__m128 m_targetPosition; //0x0F70
+	__m128 m_targetDirection; //0x0F80
+	__m128 m_targetVelocity; //0x0F90
+	float m_gravityMultiplier; //0x0FA0
+	float m_velocityDragMultiplier; //0x0FA4
+	float m_slipAngleForMinDragMultiplier; //0x0FA8
+	float m_slipAngleForMaxDragMultiplier; //0x0FAC
+	float m_minDragMultiplier; //0x0FB0
+	float m_maxDragMultiplier; //0x0FB4
+	char pad_0FB8[8]; //0x0FB8
+	__m128 N00003D71; //0x0FC0
+	__m128 N00003D75; //0x0FD0
+	__m128 N00003D79; //0x0FE0
+	char pad_0FF0[56]; //0x0FF0
+	char mName[16]; //0x1028
+	int32_t mPriority; //0x1038
+	int32_t mAffinity; //0x103C
+	bool mBreakOnEntry; //0x1040
+	bool mWantsContext; //0x1041
+	char pad_1042[2]; //0x1042
+	static union //0x1044
+	{
+		int8_t mLocalJob; //0x0000
+		int8_t mLocalJobWithContext; //0x0000
+		uint32_t mCode; //0x0000
+		int8_t mSpuJob; //0x0000
+	};
+	char pad_1048[24]; //0x1048
+	class VehiclePhysicsJob_Input m_vehiclephysicsjob_input; //0x1060
+	float m_lastInputSteering; //0x1080
+	class ForceFeedbackData m_ffbData; //0x1084
+	uint32_t m_flags; //0x10A8
+	class PointGraph8 m_angularDampeningAtAngle; //0x10AC
+	class PointGraph8 m_angularDampeningAtSpeed; //0x10FC
 	char pad_114C[4]; //0x114C
-	class PerformanceModificationComponent* perfModComponent; //0x1150
-	char pad_1158[48]; //0x1158
-	DriverComponent* driverComponent; //0x1188
-	float N0000EAA7; //0x1190
-	float N0000EFB8; //0x1194
-	HandbrakeComponent* handbrakeComponent; //0x1198
-	DonutComponent* donutComponent; //0x11A0
-	DriftComponent* driftComponent; //0x11A8
-	DriftParams* driftParams; //0x11B0
-	class RaceCarPhysicsObject* raceCarPhysObj; //0x11B8
-	SteeringComponent* steeringComponent; //0x11C0
-	RaceRigidBody* raceRigidBody; //0x11C8
-	char pad_11D0[356]; //0x11D0
-	class N0000F5A0* N0000E9FC; //0x1334
-	char pad_133C[2516]; //0x133C
-}; //Size: 0x1D10
+	class PerformanceModificationComponent* m_performanceModificationComponent; //0x1150
+	char pad_1158[16]; //0x1158
+	class RaceVehiclePerformanceModifierData* vehicleModifiers; //0x1168
+	float N0000EAA3; //0x1170
+	float N0000EFB0; //0x1174
+	class RaceVehicleForcedInductionConfigData* forcedIndConfig; //0x1178
+	char pad_1180[8]; //0x1180
+	class DriverComponent* m_driverComponent; //0x1188
+	char pad_1190[8]; //0x1190
+	class HandbrakeComponent* m_handbrakeComponent; //0x1198
+	class DonutComponent* m_donutComponent; //0x11A0
+	class DriftComponent* m_driftComponent; //0x11A8
+	class DriftParams* m_driftParams; //0x11B0
+	class RaceCarPhysicsObject* m_raceCarPhysicsObjectInterface; //0x11B8
+	class SteeringComponent* m_steeringInterface; //0x11C0
+	class RaceRigidBody* m_rigidBodyInterface; //0x11C8
+	bool m_wasHandbrakeOnLastUpdate; //0x11D0
+	char pad_11D1[3]; //0x11D1
+	float m_timeForFullBrakeStrength; //0x11D4
+	float m_brakeScale; //0x11D8
+	float m_idleBrake; //0x11DC
+	bool m_inputRecieved; //0x11E0
+	char pad_11E1[15]; //0x11E1
+	class Spring m_xCarSprings[4]; //0x11F0
+	char pad_1270[16]; //0x1270
+	class LinearTransform m_localGroundTransform; //0x1280
+	char pad_12C0[112]; //0x12C0
+}; //Size: 0x1330
+static_assert(sizeof(NFSVehicle) == 0x1330, "NFSVehicle");
 
 class RaceRigidBody
 {

@@ -19,44 +19,42 @@ public:
 	bool isDrifting; //0x0014
 	bool counterSteeringInDrift; //0x0015
 	char pad_0016[2]; //0x0016
-	class RaceRigidBody* chassis; //0x0018
-	class DriftParams* driftParams; //0x0020
+	class RaceRigidBody* mpChassisRigidBody; //0x0018
+	class DriftParams* mpParams; //0x0020
 	char pad_0028[8]; //0x0028
 	float currentYawTorque; //0x0030
 	__int32 someEnum; //0x0034
 	char pad_0038[24]; //0x0038
-	__m128 timeSinceLastDrift; //0x0050
-	__m128 speedInDriftMps; //0x0060
-	__m128 angularDamping; //0x0070
-	__m128 driftScale; //0x0080
-	__m128 timeSpentInDrift; //0x0090
-	__m128 currentSideForce; //0x00A0
-	__m128 reduceForwardSpeedAmount; //0x00B0
-	__m128 maintainEntrySpeedAmount; //0x00C0
-	__m128 N0000117B; //0x00D0
-	__m128 driftAngle; //0x00E0
-	char pad_00F0[16]; //0x00F0
-	__m128 counterSteeringSideMagnitude; //0x0100
-	__m128 avgSlipAngle; //0x0110
-	char pad_0120[16]; //0x0120
-	float driftYaw; //0x0130
-	float driftSideForce; //0x0134
-	char pad_0138[8]; //0x0138
-	__m128 throttleInput; //0x0140
-	__m128 peakDriftAngleReached; //0x0150
-	__m128 slipAngleToEnterDrift; //0x0160
-	__m128 timeSinceBrakeOrThrottlePress; //0x0170
-	__m128 resets_to_zero_after_above_is_triggered; //0x0180
-	__m128 timeBetweenDrifts; //0x0190
-	__m128 unk1; //0x01A0
-	__m128 timeSteerLeft; //0x01B0
-	__m128 lastTimeSteerLeft; //0x01C0
-	__m128 timeSinceSteerLeft; //0x01D0
-	__m128 timeSteerRight; //0x01E0
-	__m128 lastTimeSteerRight; //0x01F0
-	__m128 timeSinceSteerRight; //0x0200
-	__m128 avgTireGrip; //0x0210
-	class PerformanceModificationComponent* performanceModificationComponent; //0x0220
+	__m128 mvfTimeSinceExittingDrift; //0x0050
+	__m128 mvfMaintainedSpeed; //0x0060
+	__m128 mvfDriftYawDamping; //0x0070
+	__m128 mvfDriftScale; //0x0080
+	__m128 mvfTimeDrifting; //0x0090
+	__m128 mvfSideForceMagnitude; //0x00A0
+	__m128 mvfPropSpeedMaintainAlongZ; //0x00B0
+	__m128 mvfPropSpeedMaintainAlongVel; //0x00C0
+	__m128 mvfLatDriftForceFactor; //0x00D0
+	__m128 mvfCurrentDriftAngle; //0x00E0
+	__m128 mvfTimeInDriftWithStaticFriction; //0x00F0
+	__m128 mvfCounterSteerSideMag; //0x0100
+	__m128 mvfRearSlipAngle; //0x0110
+	__m128 mv_YawDamping_Spare_Spare_Spare; //0x0120
+	__m128 mv_MaintainSpeedForce_SideForce_Spare_Spare; //0x0130
+	__m128 mvfPreviousGasInput; //0x0140
+	__m128 mvfMaxSlipAngle; //0x0150
+	__m128 mvfSlipAngleForDriftEntry; //0x0160
+	__m128 mvfTimePressingBrake; //0x0170
+	__m128 mvbPressedFullBrake; //0x0180
+	__m128 mvfTimeWithLowSlipAngle; //0x0190
+	__m128 mvbDriftingWithLowSlipAngle; //0x01A0
+	__m128 mvfTimeSteerLeft; //0x01B0
+	__m128 mvfLastTimeSteerLeft; //0x01C0
+	__m128 mvfTimeSinceSteerLeft; //0x01D0
+	__m128 mvfTimeSteerRight; //0x01E0
+	__m128 mvfLastTimeSteerRight; //0x01F0
+	__m128 mvfTimeSinceSteerRight; //0x0200
+	__m128 mvfTireGrip; //0x0210
+	class PerformanceModificationComponent* m_performanceModificationComponent; //0x0220
 	char pad_0228[52]; //0x0228
 }; //Size: 0x025C
 
@@ -128,11 +126,29 @@ public:
 	class PerformanceModificationComponent* perfModComponent; //0x0070
 }; //Size: 0x0078
 
-class PerformanceModificationComponent
+struct __declspec(align(4)) ModifiedValueCache
+{
+	float scalar;
+	float modifier;
+	bool useOverride;
+};
+
+struct __declspec(align(4)) PerformanceModifier
+{
+	RaceVehicleModificationType modificationType;
+	float modifier;
+};
+
+class __declspec(align(8)) PerformanceModificationComponent
 {
 public:
-
-};
+	int64_t pad_0000[5];
+	class RaceVehiclePerformanceModifierData* m_vehicleModifications;
+	class RaceVehiclePerformanceModifierData* m_gearChangeTimeMods;
+	int64_t pad_0038[48];
+	ModifiedValueCache m_modifiedValueCache[159];
+	PerformanceModifier m_modifiers[159];
+}; static_assert(sizeof(PerformanceModificationComponent) == 0xE28, "PerfModComponent error");
 
 class SteeringComponent
 {

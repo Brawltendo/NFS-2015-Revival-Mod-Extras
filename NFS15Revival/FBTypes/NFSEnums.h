@@ -135,7 +135,7 @@ enum EHandbrakeState : __int32
 	EHandbrakeStateJTurnComplete = 0x5,
 };
 
-enum class RaceVehicleModificationType : __int32
+enum RaceVehicleModificationType : __int32
 {
 	ModificationType_Scalar = 0x0,
 	ModificationType_Addition = 0x1,
@@ -303,4 +303,12 @@ enum RaceVehicleAttributeToModify : __int32
 	ATM_WheelPivotPointXOffsetFront = 0x9C,
 	ATM_WheelPivotPointXOffsetRear = 0x9D,
 	ATM_Max = 0x9E,
+};
+
+enum VehicleCollisionBody : __int32
+{
+	VehicleCollisionBody_StockOnGround = 0x0,
+	VehicleCollisionBody_StockCrashing = 0x1,
+	VehicleCollisionBody_WideOnGround = 0x2,
+	VehicleCollisionBody_WideCrashing = 0x3,
 };

@@ -13,9 +13,9 @@ uintptr_t FindDMAAddy(HANDLE hProc, uintptr_t ptr, std::vector<unsigned int> off
 	return addr;
 }
 
-float map(float s, float a1, float a2, float b1, float b2)
+float map(float in, float inMin, float inMax, float outMin, float outMax)
 {
-	return b1 + (s - a1) * (b2 - b1) / (a2 - a1);
+	return outMin + (in - inMin) * (outMax - outMin) / (inMax - inMin);
 }
 
 // Creates a PointGraph from a 4D vector array. The original arrays from the vehicle configs are never greater or less than 10 members.
@@ -82,6 +82,11 @@ float sign(float in, float scale)
 		return -1 * fabsf(scale);
 	else return 0;
 
+}
+
+float GetSpeedMph(NFSVehicle* nfsVehicle)
+{
+	return nfsVehicle->m_forwardSpeed * 2.2369399;
 }
 
 float RadiansToDegrees(float radian) {

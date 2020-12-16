@@ -1,88 +1,33 @@
 #include "pch.h"
 #include "PerformanceModification.h"
+#include "NFSClasses.h"
 
-float GetModifiedValueSideForceMagnitude(PerformanceModificationComponent* perfMod, float unmodifiedSideForce)
+// Ghost/Criterion why do you have separate functions for every single performance mod instead of doing it like this???
+
+float GetModifiedValue(class PerformanceModificationComponent* perfMod, int attributeToModify, float unmodifiedValue)
 {
-    float modified;
-    float finalModified;
-    RaceVehicleModificationType modType;
+    float value = 0;
 
-    if ((bool)perfMod + 0x304)
+    if (perfMod->m_modifiedValueCache[attributeToModify].useOverride) value = perfMod->m_modifiedValueCache[attributeToModify].modifier;
+
+    else
     {
-        ReadProcessMemory(GetCurrentProcess(), (BYTE*)perfMod + 0x300, &modified, sizeof(modified), nullptr);
+        value = (unmodifiedValue * perfMod->m_modifiedValueCache[attributeToModify].scalar) + perfMod->m_modifiedValueCache[attributeToModify].modifier;
+    }
+
+    if (perfMod->m_modifiers[attributeToModify].modificationType == RaceVehicleModificationType::ModificationType_Scalar)
+    {
+        return value * perfMod->m_modifiers[attributeToModify].modifier;
     }
     else
     {
-        float modified1;
-        ReadProcessMemory(GetCurrentProcess(), (BYTE*)perfMod + 0x2FC, &modified, sizeof(modified), nullptr);
-        ReadProcessMemory(GetCurrentProcess(), (BYTE*)perfMod + 0x300, &modified1, sizeof(modified1), nullptr);
-
-        modified = (modified * unmodifiedSideForce) + modified1;
-    }
-    ReadProcessMemory(GetCurrentProcess(), (BYTE*)perfMod + 0xA04, &modType, sizeof(modType), nullptr);
-    if (modType == RaceVehicleModificationType::ModificationType_Scalar )
-    {
-        float scalar;
-        ReadProcessMemory(GetCurrentProcess(), (BYTE*)perfMod + 0xA08, &scalar, sizeof(scalar), nullptr);
-        return modified * scalar; // ModificationType_Scalar
-    }
-    else
-    {
-        RaceVehicleModificationType nextModType = (RaceVehicleModificationType)((int)modType - 1);
-        if (nextModType == RaceVehicleModificationType::ModificationType_Override)
+        if (perfMod->m_modifiers[attributeToModify].modificationType == RaceVehicleModificationType::ModificationType_Addition)
         {
-            float override;
-            ReadProcessMemory(GetCurrentProcess(), (BYTE*)perfMod + 0xA08, &override, sizeof(override), nullptr);
-            return override; // ModificationType_Override
+            return value + perfMod->m_modifiers[attributeToModify].modifier;
         }
         else
         {
-            float addend;
-            ReadProcessMemory(GetCurrentProcess(), (BYTE*)perfMod + 0xA08, &addend, sizeof(addend), nullptr);
-            return modified + addend; // ModificationType_Addition
-        }
-    }
-}
-
-float GetModifiedValueYawTorque(PerformanceModificationComponent* perfMod, float unmodifiedYawTorque)
-{
-    float modified;
-    float finalModified;
-    RaceVehicleModificationType modType;
-
-    if ((bool)perfMod + 0x1CC)
-    {
-        ReadProcessMemory(GetCurrentProcess(), (BYTE*)perfMod + 0x1C8, &modified, sizeof(modified), nullptr);
-    }
-    else
-    {
-        float modified1;
-        ReadProcessMemory(GetCurrentProcess(), (BYTE*)perfMod + 0x1C4, &modified, sizeof(modified), nullptr);
-        ReadProcessMemory(GetCurrentProcess(), (BYTE*)perfMod + 0x1C8, &modified1, sizeof(modified1), nullptr);
-
-        modified = (modified * unmodifiedYawTorque) + modified1;
-    }
-    ReadProcessMemory(GetCurrentProcess(), (BYTE*)perfMod + 0x934, &modType, sizeof(modType), nullptr);
-    if (modType == RaceVehicleModificationType::ModificationType_Scalar)
-    {
-        float scalar;
-        ReadProcessMemory(GetCurrentProcess(), (BYTE*)perfMod + 0x938, &scalar, sizeof(scalar), nullptr);
-        return modified * scalar; // ModificationType_Scalar
-    }
-    else
-    {
-        RaceVehicleModificationType nextModType = (RaceVehicleModificationType)((int)modType - 1);
-        if (nextModType == RaceVehicleModificationType::ModificationType_Override)
-        {
-            float override;
-            ReadProcessMemory(GetCurrentProcess(), (BYTE*)perfMod + 0x938, &override, sizeof(override), nullptr);
-            return override; // ModificationType_Override
-        }
-        else
-        {
-            float addend;
-            ReadProcessMemory(GetCurrentProcess(), (BYTE*)perfMod + 0x938, &addend, sizeof(addend), nullptr);
-            return modified + addend; // ModificationType_Addition
+            return perfMod->m_modifiers[attributeToModify].modifier;
         }
     }
 }

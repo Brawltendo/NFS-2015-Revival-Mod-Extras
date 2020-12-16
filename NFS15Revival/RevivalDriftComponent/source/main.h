@@ -11,3 +11,5 @@ using namespace std;
 #else
 # define Debug(fmtstr, ...)
 #endif
+
+typedef F32vec4 vec4;

@@ -1,5 +1,7 @@
 #pragma once
+#include "pch.h"
 #include <corecrt_math.h>
+#include <xmmintrin.h>
 #include "PerformanceModification/PerformanceModification.h"
 
 using namespace std;
@@ -7,7 +9,10 @@ using namespace std;
 class RevivalDriftComponent
 {
 public:
-	float timeSinceLastDrift;
+	bool isDrifting;
+	bool isExitingDrift;
+	float timeInDrift;
+	float timeSinceDriftExit;
 	__m128 yawDamping;
 	__m128 angDamping;
 	float driftScale;
@@ -15,16 +20,16 @@ public:
 	float peakSlipAngleReached;
 	float timeSteeringLeft;
 	float timeSteeringRight;
-	float timeApplyingChainDriftDamping;
-	float chainedDriftDampingFactor;
+	float exitDriftTimer;
+	float driftExitDampingFactor;
 	float counterSteeringSideMagnitude;
-};
+	float maxDriftAngle;
 
-float GetDeltaTime(NFSVehicle* nfsVehicle);
-float GetAvgRearSlip(DriftComponent* driftComponent);
-float GetSpeedMph(NFSVehicle* nfsVehicle);
-bool CheckForEnteringDrift(NFSVehicle* nfsVehicle, DriftComponent* driftComp);
-void SetDriftScale(DriftComponent* const driftComp, RevivalDriftComponent* bDrift);
-bool IsChainingDrift(DriftComponent* driftComp, RevivalDriftComponent* bDrift);
-void UpdateCounterSteeringSideMagnitude(NFSVehicle* const nfsVehicle, DriftComponent* driftComp, RevivalDriftComponent* bDrift, const float lvfSteering, const float localAngVelDegrees, const float lvfTimeStep);
-float RemapSteeringForDrift(DriftComponent* const driftComp, RevivalDriftComponent* bDrift, const float steeringInput, const float slipAngleDegrees, const float maxSteeringAngle, SteeringComponent* lpSteeringComponent);
+	float GetAvgRearSlip(class DriftComponent* driftComponent);
+	void CheckForEnteringDrift(class NFSVehicle* nfsVehicle, DriftComponent* driftComp);
+	void UpdateDriftAngle(class NFSVehicle* nfsVehicle);
+	void UpdateDriftScale(class NFSVehicle* nfsVehicle, DriftComponent* const driftComp);
+	bool IsChainingDrift(class DriftComponent* driftComp);
+	void UpdateCounterSteeringSideMagnitude(class NFSVehicle* const nfsVehicle, class DriftComponent* driftComp,const float lvfSteering, const float localAngVelDegrees, const float lvfTimeStep);
+	float RemapSteeringForDrift(class DriftComponent* const driftComp, const float steeringInput, const float slipAngleDegrees, const float maxSteeringAngle, class SteeringComponent* lpSteeringComponent);
+};
