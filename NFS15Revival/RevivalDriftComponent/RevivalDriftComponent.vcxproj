@@ -100,6 +100,7 @@
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.asi</TargetExt>
     <IncludePath>L:\NeedForSpeedASIs\NFS-2015-Revival-Mod-Extras\NFS15Revival;L:\NeedForSpeedASIs\NFS-2015-Revival-Mod-Extras\NFS15Revival\util;L:\NeedForSpeedASIs\NFS-2015-Revival-Mod-Extras\NFS15Revival\RevivalDriftComponent\source;L:\NeedForSpeedASIs\NFS-2015-Revival-Mod-Extras\NFS15Revival\imgui;L:\NeedForSpeedASIs\NFS-2015-Revival-Mod-Extras\NFS15Revival\FBTypes;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -129,8 +130,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;NFS15REVIVAL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -146,16 +145,20 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;NFS15REVIVAL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>L:\NeedForSpeedASIs\NFS-2015-Revival-Mod-Extras\NFS15Revival\source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(SolutionDir)$(Platform)\$(Configuration)\$(TargetName)$(TargetExt)" "L:\Games\Need for Speed\asi" /s /i /y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

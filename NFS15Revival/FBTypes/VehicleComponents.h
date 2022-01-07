@@ -14,27 +14,46 @@ public:
 
 class DriftComponent
 {
-public:
+public:	
 	char pad_0000[20]; //0x0000
 	bool isDrifting; //0x0014
 	bool counterSteeringInDrift; //0x0015
-	char pad_0016[2]; //0x0016
+
+	// 0x0016
+	bool isExitingDrift;
+	char pad_0017;
+
 	class RaceRigidBody* mpChassisRigidBody; //0x0018
 	class DriftParams* mpParams; //0x0020
 	char pad_0028[8]; //0x0028
 	float currentYawTorque; //0x0030
 	__int32 someEnum; //0x0034
 	char pad_0038[24]; //0x0038
-	__m128 mvfTimeSinceExittingDrift; //0x0050
+
+	// 0x50
+	// index 0: time since exiting drift
+	// index 1: drift exit timer
+	__m128 mvfTimeSinceExittingDrift;
+
 	__m128 mvfMaintainedSpeed; //0x0060
-	__m128 mvfDriftYawDamping; //0x0070
+
+	// 0x0070
+	// index 0: yaw damping
+	// index 1: exit damping factor
+	// index 2: side force damping scale
+	__m128 mvfDriftYawDamping;
 	__m128 mvfDriftScale; //0x0080
 	__m128 mvfTimeDrifting; //0x0090
 	__m128 mvfSideForceMagnitude; //0x00A0
 	__m128 mvfPropSpeedMaintainAlongZ; //0x00B0
 	__m128 mvfPropSpeedMaintainAlongVel; //0x00C0
 	__m128 mvfLatDriftForceFactor; //0x00D0
-	__m128 mvfCurrentDriftAngle; //0x00E0
+
+	// 0x00E0
+	// index 0: current angle
+	// index 1: max angle reached
+	__m128 mvfCurrentDriftAngle;
+
 	__m128 mvfTimeInDriftWithStaticFriction; //0x00F0
 	__m128 mvfCounterSteerSideMag; //0x0100
 	__m128 mvfRearSlipAngle; //0x0110

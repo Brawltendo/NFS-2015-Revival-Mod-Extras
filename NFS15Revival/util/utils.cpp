@@ -61,19 +61,6 @@ float EvaluatePointGraph8(PointGraph8* pgIn, float input)
 	return outVal;
 }
 
-bool IsGameTicking(DWORD nextTick, int loops, int frameSkip)
-{
-	return GetTickCount() > nextTick && loops < frameSkip;
-}
-/*
-int CurrentTick(uintptr_t gameContext)
-{
-	int tickCount;
-	uintptr_t gameTime = FindDMAAddy(GetCurrentProcess(), gameContext, { 0x70, 0x0 });
-	ReadProcessMemory(GetCurrentProcess(), (BYTE*)gameTime + 0x3C, &tickCount, sizeof(tickCount), nullptr);
-	return tickCount;
-}
-*/
 float sign(float in, float scale)
 {
 	if (in > 0)
@@ -86,10 +73,10 @@ float sign(float in, float scale)
 
 float GetSpeedMph(NFSVehicle* nfsVehicle)
 {
-	return nfsVehicle->m_forwardSpeed * 2.2369399;
+	return nfsVehicle->m_forwardSpeed * 2.2369399f;
 }
 
 float RadiansToDegrees(float radian) {
-	float pi = 3.14159;
+	float pi = 3.14159f;
 	return(radian * (180 / pi));
 }

@@ -776,7 +776,7 @@ public:
 	bool mBreakOnEntry; //0x1040
 	bool mWantsContext; //0x1041
 	char pad_1042[2]; //0x1042
-	static union //0x1044
+	union //0x1044
 	{
 		int8_t mLocalJob; //0x0000
 		int8_t mLocalJobWithContext; //0x0000

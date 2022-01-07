@@ -7,6 +7,7 @@
 #include <algorithm>
 
 #ifndef NFS_NATIVE_FUNCTIONS
+
 typedef PointGraph8* (__fastcall* _initPointGraph8FromCurveData)(PointGraph8* pointGraphIn, __m128 (*curveData)[10]);
 typedef float(__fastcall* _PointGraph8__Evaluate)(int pgCount, float(*pgInX)[8], float(*pgInY)[8], float xVal);
 typedef void(__fastcall* _AddWorldCOMForceLogged)(RaceRigidBody* rigidBody, __m128* force, __m128* lfTimeStep);
@@ -30,14 +31,16 @@ _DampPitchYawRoll DampPitchYawRoll = (_DampPitchYawRoll)0x1441712D0;
 _GetTransform GetTransform = (_GetTransform)0x1441718C0;
 _GetAngularVelocity GetAngularVelocity = (_GetAngularVelocity)0x1441717E0;
 _MaintainDriftSpeed MaintainDriftSpeed = (_MaintainDriftSpeed)0x1441960E0;
-_UpdateDriftScale UpdateDriftScale = (_UpdateDriftScale)0x144197840;
+//_UpdateDriftScale UpdateDriftScale = (_UpdateDriftScale)0x144197840;
 _UpdateDriftAngleDegrees UpdateDriftAngleDegrees = (_UpdateDriftAngleDegrees)0x144197690;
 _UpdateSideForce UpdateSideForce = (_UpdateSideForce)0x144197FC0;
 _ApplyDriftForces ApplyDriftForces = (_ApplyDriftForces)0x144193890;
 _ApplyDamping ApplyDamping = (_ApplyDamping)0x1441935E0;
+
 #endif // NFS_NATIVE_FUNCTIONS
 
 #ifndef REVIVAL_FUNCTIONS_REGION
+
 float GetLocalAngVelDegrees(RaceRigidBody* chassis)
 {
     Matrix44 matrix;
@@ -51,32 +54,31 @@ float GetLocalAngVelDegrees(RaceRigidBody* chassis)
     return RadiansToDegrees(localAngVelFinal.m128_f32[0]);
 }
 
-void UpdateDriftAngle(RaceRigidBody* chassis, DriftComponent* driftComp, RevivalDriftComponent* bDrift)
+void UpdateDriftAngle(RaceRigidBody* chassis, DriftComponent* driftComp)
 {
     UpdateDriftAngleDegrees(driftComp);
-    bDrift->driftAngle = sign(GetLocalAngVelDegrees(chassis), 1) * driftComp->mvfCurrentDriftAngle.m128_f32[0];
+    driftComp->mvfCurrentDriftAngle.m128_f32[0] = sign(GetLocalAngVelDegrees(chassis), 1) * driftComp->mvfCurrentDriftAngle.m128_f32[0];
     // Debug("driftAngle: %f\n", bDrift->driftAngle);
 }
 
-void DriftSideForce(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RevivalDriftComponent* bDrift, RaceRigidBody* chassis)
+void DriftSideForce(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RaceRigidBody* chassis)
 {
     //Debug("driftAngle: %f\n", bDrift->driftAngle);
     Matrix44 matrix;
-    __m128 force;
     __m128 sideVector = GetTransform(chassis, &matrix)->xAxis;
     __m128 timeStep = _mm_shuffle_ps({ nfsVehicle->m_currentUpdateDt }, { nfsVehicle->m_currentUpdateDt }, 0);
     RaceVehicleDriftConfigData* sideForceParams = driftComp->mpParams->sideForceParams;
-    bDrift->UpdateCounterSteeringSideMagnitude(nfsVehicle, driftComp, nfsVehicle->m_input->steeringInput.X, GetLocalAngVelDegrees(chassis), timeStep.m128_f32[0]);
-    float absDriftAngle = fabsf(bDrift->driftAngle);
+    UpdateCounterSteeringSideMagnitude(nfsVehicle, driftComp, nfsVehicle->m_input->steeringInput.X, GetLocalAngVelDegrees(chassis), timeStep.m128_f32[0]);
+    float absDriftAngle = fabsf(driftComp->mvfCurrentDriftAngle.m128_f32[0]);
     float sideForceMagnitude = -GetModifiedValue(nfsVehicle->m_performanceModificationComponent, ATM_SideForceMagnitude, sideForceParams->Side_force_magnitude);
     float sideForceSpeedRatio = fminf(1.f, fmaxf(0.f, (GetSpeedMph(nfsVehicle) - sideForceParams->Speed_for_no_sideforce) / (sideForceParams->Speed_for_maximum_side_force - sideForceParams->Speed_for_no_sideforce)));
     float angleForSideForceRange = sideForceParams->Minimum_drift_angle_for_side_force - sideForceParams->Drift_angle_for_side_force;
     float angleForSideForceRatio = fminf(angleForSideForceRange, fmaxf(0.f, absDriftAngle - sideForceParams->Drift_angle_for_side_force)) / angleForSideForceRange;
-    float driftScaleInfluenceOnSideForce = fminf(fabsf(bDrift->driftScale), sideForceParams->Drift_scale_for_maximum_side_force);
+    float driftScaleInfluenceOnSideForce = fminf(fabsf(driftComp->mvfDriftScale.m128_f32[0]), sideForceParams->Drift_scale_for_maximum_side_force);
     float decaySideForceMag = fmaxf(0.f, sideForceMagnitude - sideForceParams->Min_decay_side_force_magnitude / sideForceMagnitude);
     float sideForceDecay = fminf(fmaxf(absDriftAngle - sideForceParams->Drift_angle_for_decay, 0) * (!driftComp->counterSteeringInDrift ? sideForceParams->Decay_rate : 1.f), fminf(1, decaySideForceMag));
     float latSideForceFactor = fmaxf(angleForSideForceRatio - sideForceDecay, 0.f) * driftScaleInfluenceOnSideForce / sideForceParams->Drift_scale_for_maximum_side_force;
-    latSideForceFactor = fminf(latSideForceFactor * sideForceSpeedRatio * nfsVehicle->m_grounddata.averageDriveGrip * -(1.f + bDrift->counterSteeringSideMagnitude), 5.f);
+    latSideForceFactor = fminf(latSideForceFactor * sideForceSpeedRatio * nfsVehicle->m_grounddata.averageDriveGrip * -(1.f + driftComp->mvfCounterSteerSideMag.m128_f32[0]), 5.f);
     float scaledSideForce = latSideForceFactor * nfsVehicle->m_originalMass * sideForceMagnitude;
     driftComp->mvfSideForceMagnitude = _mm_set1_ps(scaledSideForce);
 
@@ -88,7 +90,7 @@ void DriftSideForce(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RevivalDr
             _mm_set1_ps( nfsVehicle->m_grounddata.avgGroundNormal.m128_f32[1]),
             _mm_set1_ps( nfsVehicle->m_grounddata.avgGroundNormal.m128_f32[0])));
 
-    __m128 localSideForceA = sideVector * (scaledSideForce * -sign(bDrift->driftAngle, 1));
+    __m128 localSideForceA = sideVector * (scaledSideForce * -sign(driftComp->mvfCurrentDriftAngle.m128_f32[0], 1));
     __m128 localSideForceB = localSideForceA * avgGroundNormal;
     __m128 localSideForceC = _mm_shuffle_ps(localSideForceB, localSideForceB, 2) + _mm_shuffle_ps(localSideForceB, localSideForceB, 1) + localSideForceB;
     __m128 localSideForceD = _mm_shuffle_ps(localSideForceC, localSideForceC, 0);
@@ -118,7 +120,7 @@ void DriftSpeedRetention(NFSVehicle* nfsVehicle, DriftComponent* driftComp, Race
     MaintainDriftSpeed(driftComp, &gasInput, &brakeInput, &forwardVector, nfsVehicle->m_raceCarPhysicsObjectInterface, &timeStep);
 }
 
-void DriftTorque(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RevivalDriftComponent* bDrift, RaceRigidBody* chassis, __m128 timeStep)
+void DriftTorque(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RaceRigidBody* chassis, __m128 timeStep)
 {
     Matrix44 matrix;
     __m128 upVector = GetTransform(chassis, &matrix)->yAxis;
@@ -135,8 +137,8 @@ void DriftTorque(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RevivalDrift
 
     float absSteeringInput = fabsf(nfsVehicle->m_lastInputSteering);
     float steeringRemaining = 1.f - absSteeringInput;
-    bool counterSteering = nfsVehicle->m_lastInputSteering * bDrift->driftScale < 0;
-    float absDriftScale = fabsf(bDrift->driftScale);
+    bool counterSteering = nfsVehicle->m_lastInputSteering * driftComp->mvfDriftScale.m128_f32[0] < 0;
+    float absDriftScale = fabsf(driftComp->mvfDriftScale.m128_f32[0]);
     float absSlipAngle = fabsf(driftComp->mvfRearSlipAngle.m128_f32[0]);
     float blendMinMidYaw = midYawTorque - minYawTorque * absDriftScale + minYawTorque;
     float calcYawA = driftParams->Maximum_yaw_torque - midYawTorque * absDriftScale + midYawTorque - blendMinMidYaw * absDriftScale + blendMinMidYaw;
@@ -144,7 +146,7 @@ void DriftTorque(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RevivalDrift
     if (absDriftScale > Epsilon)
     {
         float steeringRemap = (steeringRemaining * counterSteerRemap) + (absSteeringInput * defaultSteeringRemap);
-        float calcYawB = 0.f - (sign(bDrift->driftScale, 1) * (gasLetOffTorque * driftComp->mvfPreviousGasInput.m128_f32[0] + steeringRemap)) * calcYawA;
+        float calcYawB = 0.f - (sign(driftComp->mvfDriftScale.m128_f32[0], 1) * (gasLetOffTorque * driftComp->mvfPreviousGasInput.m128_f32[0] + steeringRemap)) * calcYawA;
         float driftScaleBlendDownRange = slipAngleForBlendDown - slipAngleForZeroScale;
         if (driftScaleBlendDownRange <= Epsilon) driftScaleBlendDownRange = Epsilon;
         float calcYawC = !counterSteering * nfsVehicle->m_grounddata.averageDriveGrip * calcYawB * driftComp->mvfTireGrip.m128_f32[0];
@@ -156,7 +158,7 @@ void DriftTorque(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RevivalDrift
     }
 }
 
-void ApplyDriftDamping(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RevivalDriftComponent* bDrift, RaceRigidBody* chassis, __m128 timeStep)
+void ApplyDriftDamping(NFSVehicle* nfsVehicle, DriftComponent* driftComp, RaceRigidBody* chassis, __m128 timeStep)
 {
     float slipToEnterDrift = driftComp->mpParams->driftTriggerParams->Slip_angle_to_enter_drift;
     float slipForDeepDrift = driftComp->mpParams->driftTriggerParams->Slip_angle_for_deep_drift;
@@ -167,13 +169,13 @@ void ApplyDriftDamping(NFSVehicle* nfsVehicle, DriftComponent* driftComp, Reviva
     //PointGraph8 dampingAtSpeed = initPointGraph8(*driftComp->mpParams->driftTriggerParams->YawDampeningAtSpeed);
     float avgTireGrip = driftComp->mvfTireGrip.m128_f32[0];
 
-    float dampingAng = EvaluatePointGraph8(&nfsVehicle->m_angularDampeningAtAngle, fabsf(bDrift->driftAngle));
+    float dampingAng = EvaluatePointGraph8(&nfsVehicle->m_angularDampeningAtAngle, fabsf(driftComp->mvfCurrentDriftAngle.m128_f32[0]));
     Debug("YawDampeningAtAngle: %f\n", dampingAng);
     float dampingSpeed = EvaluatePointGraph8(&nfsVehicle->m_angularDampeningAtSpeed, fabsf(GetSpeedMph(nfsVehicle)));
     Debug("YawDampeningAtSpeed: %f\n", dampingSpeed);
 
-    float avgSlipAng = bDrift->GetAvgRearSlip(driftComp);
-    float dampingBlendTime = 1 - (bDrift->timeSinceDriftExit / timeToBlendDamping);
+    float avgSlipAng = GetAvgRearSlip(driftComp);
+    float dampingBlendTime = 1 - (driftComp->mvfTimeSinceExittingDrift.m128_f32[0] / timeToBlendDamping);
     float v32 = fminf(1, fmaxf(0, (fabsf(avgSlipAng) / 1))) * gasInput;
     __m128 v36 = _mm_cmplt_ps({ 0,0,0,0 }, { slipForFullDamping,slipForFullDamping,slipForFullDamping,slipForFullDamping });
 
@@ -190,53 +192,54 @@ void ApplyDriftDamping(NFSVehicle* nfsVehicle, DriftComponent* driftComp, Reviva
                 _mm_shuffle_ps({ dampingAng }, { dampingAng }, 0)),
             _mm_shuffle_ps({ dampingSpeed }, { dampingSpeed }, 0)
         );
-    ApplyDamping(driftComp, &_mm_shuffle_ps({ nfsVehicle->m_grounddata.averageDriveGrip }, { nfsVehicle->m_grounddata.averageDriveGrip }, 0), &dampingScale, &timeStep);
+    __m128 surfaceGripFactor = _mm_shuffle_ps({ nfsVehicle->m_grounddata.averageDriveGrip }, { nfsVehicle->m_grounddata.averageDriveGrip }, 0);
+    ApplyDamping(driftComp, &surfaceGripFactor, &dampingScale, &timeStep);
 }
 
-float originalSideForceDamping = 0;
-void UpdateDriftExit(NFSVehicle* const nfsVehicle, DriftComponent* driftComponent, RevivalDriftComponent* bDriftComp)
+void UpdateDriftExit(NFSVehicle* const nfsVehicle, DriftComponent* driftComponent)
 {
     __m128 timeStep = _mm_shuffle_ps({ nfsVehicle->m_currentUpdateDt }, { nfsVehicle->m_currentUpdateDt }, 0);
 
-    if (bDriftComp->exitDriftTimer > 0)
+    if (driftComponent->mvfTimeSinceExittingDrift.m128_f32[1] > 0)
     {
         Debug("Exiting drift!\n");
-        driftComponent->mpParams->driftTriggerParams->Drift_sideways_damping = originalSideForceDamping * 1.5;
+        driftComponent->mvfDriftYawDamping.m128_f32[2] = driftComponent->mpParams->driftTriggerParams->Drift_sideways_damping * 1.5f;
 
-        if (bDriftComp->driftScale > 0 || bDriftComp->driftScale < 0)
+        if (driftComponent->mvfDriftScale.m128_f32[0] > 0 || driftComponent->mvfDriftScale.m128_f32[0] < 0)
         {
-            bDriftComp->driftScale += driftComponent->mpParams->driftTriggerParams->Drift_scale_decay * -sign(bDriftComp->driftScale, 1) * nfsVehicle->m_currentUpdateDt;
-            bDriftComp->driftScale = std::clamp(bDriftComp->driftScale, -1.f, 1.f);
+            driftComponent->mvfDriftScale.m128_f32[0] += driftComponent->mpParams->driftTriggerParams->Drift_scale_decay * -sign(driftComponent->mvfDriftScale.m128_f32[0], 1) * nfsVehicle->m_currentUpdateDt;
+            driftComponent->mvfDriftScale.m128_f32[0] = std::clamp(driftComponent->mvfDriftScale.m128_f32[0], -1.f, 1.f);
         }
-        else bDriftComp->driftScale = 0;
+        else driftComponent->mvfDriftScale.m128_f32[0] = 0;
 
-        bDriftComp->exitDriftTimer -= timeStep.m128_f32[0];
-        bDriftComp->driftExitDampingFactor = 
-            map(bDriftComp->exitDriftTimer, 0, driftComponent->mpParams->driftTriggerParams->Starting_drift_scale_after_scandinavian_flick, 0, driftComponent->mpParams->driftTriggerParams->Steering_amount_on_exit_drift);
+        driftComponent->mvfTimeSinceExittingDrift.m128_f32[1] -= timeStep.m128_f32[0];
+        driftComponent->mvfDriftYawDamping.m128_f32[1] =
+            map(driftComponent->mvfTimeSinceExittingDrift.m128_f32[1], 0, driftComponent->mpParams->driftTriggerParams->Starting_drift_scale_after_scandinavian_flick, 0, driftComponent->mpParams->driftTriggerParams->Steering_amount_on_exit_drift);
 
-        __m128 driftExitDamping = _mm_shuffle_ps({ bDriftComp->driftExitDampingFactor }, { bDriftComp->driftExitDampingFactor }, 0);
-        nfsVehicle->m_raceCarInputState.inputSteering =
-            bDriftComp->RemapSteeringForDrift(driftComponent, nfsVehicle->m_input->steeringInput.X, driftComponent->mvfRearSlipAngle.m128_f32[0], nfsVehicle->m_raceCar->mVehicleTuning.maxSteeringAngle, nfsVehicle->m_steeringInterface);
-        ApplyDamping(driftComponent, &_mm_shuffle_ps({ nfsVehicle->m_grounddata.averageDriveGrip }, { nfsVehicle->m_grounddata.averageDriveGrip }, 0), &driftExitDamping, &timeStep);
+        __m128 driftExitDamping = _mm_shuffle_ps({ driftComponent->mvfDriftYawDamping.m128_f32[1] }, { driftComponent->mvfDriftYawDamping.m128_f32[1] }, 0);
+        //nfsVehicle->m_raceCarInputState.inputSteering =
+        //    bDriftComp->RemapSteeringForDrift(driftComponent, nfsVehicle->m_input->steeringInput.X, driftComponent->mvfRearSlipAngle.m128_f32[0], nfsVehicle->m_raceCar->mVehicleTuning.maxSteeringAngle, nfsVehicle->m_steeringInterface);
+        __m128 surfaceGripFactor = _mm_shuffle_ps({ nfsVehicle->m_grounddata.averageDriveGrip }, { nfsVehicle->m_grounddata.averageDriveGrip }, 0);
+        ApplyDamping(driftComponent, &surfaceGripFactor, &driftExitDamping, &timeStep);
     }
-    else if (bDriftComp->exitDriftTimer <= 0)
+    else if (driftComponent->mvfTimeSinceExittingDrift.m128_f32[1] <= 0)
     {
-        bDriftComp->isDrifting = false;
-        bDriftComp->isExitingDrift = false;
-        driftComponent->mpParams->driftTriggerParams->Drift_sideways_damping = originalSideForceDamping;
+        driftComponent->isDrifting = false;
+        driftComponent->isExitingDrift = false;
+        driftComponent->mvfDriftYawDamping.m128_f32[2] = driftComponent->mpParams->driftTriggerParams->Drift_sideways_damping;
         driftComponent->currentYawTorque = 0;
     }
 }
 
-void UpdateDrift(NFSVehicle* const nfsVehicle, DriftComponent* driftComponent, RevivalDriftComponent* bDriftComp, RaceRigidBody* const rigidBody)
+void UpdateDrift(NFSVehicle* const nfsVehicle, DriftComponent* driftComponent, RaceRigidBody* const rigidBody)
 {
-    if (bDriftComp->isDrifting && !bDriftComp->isExitingDrift)
+    if (driftComponent->isDrifting && !driftComponent->isExitingDrift)
     {
         __m128 timeStep = _mm_shuffle_ps({ nfsVehicle->m_currentUpdateDt }, { nfsVehicle->m_currentUpdateDt }, 0);
         float slipAngleDegrees = driftComponent->mvfRearSlipAngle.m128_f32[0];
         __m128 avgSlipAng = _mm_shuffle_ps({ slipAngleDegrees }, { slipAngleDegrees }, 0);
         float speedMph = GetSpeedMph(nfsVehicle);
-        originalSideForceDamping = driftComponent->mpParams->driftTriggerParams->Drift_sideways_damping;
+        driftComponent->mvfDriftYawDamping.m128_f32[2] = driftComponent->mpParams->driftTriggerParams->Drift_sideways_damping;
 
         driftComponent->mvfTimeDrifting = { 0,0,0,0 };
         //bDriftComp->driftExitDampingFactor = driftComponent->mpParams->driftTriggerParams->Starting_drift_scale_after_scandinavian_flick;
@@ -253,58 +256,77 @@ void UpdateDrift(NFSVehicle* const nfsVehicle, DriftComponent* driftComponent, R
 
         /*driftComponent->mvfSideForceMagnitude = { 0,0,0,0 };
         driftComponent->counterSteeringSideMagnitude = { 0,0,0,0 };*/
-        driftComponent->mvfDriftYawDamping = { 0,0,0,0 };
-        bDriftComp->timeInDrift += timeStep.m128_f32[0];
-        bDriftComp->timeSteeringLeft = nfsVehicle->m_input->steeringInput.X > 0 ? bDriftComp->timeSteeringLeft + timeStep.m128_f32[0] : 0;
-        bDriftComp->timeSteeringRight = nfsVehicle->m_input->steeringInput.X < 0 ? bDriftComp->timeSteeringRight + timeStep.m128_f32[0] : 0;
-        bDriftComp->peakSlipAngleReached = fmaxf(bDriftComp->peakSlipAngleReached, fmaxf(driftComponent->mvfRearSlipAngle.m128_f32[0] * -1.f, driftComponent->mvfRearSlipAngle.m128_f32[0]));
+        driftComponent->mvfDriftYawDamping.m128_f32[0] = 0;
+        driftComponent->mvfDriftYawDamping.m128_f32[1] = 0;
+        driftComponent->mvfTimeDrifting.m128_f32[0] += timeStep.m128_f32[0];
+        driftComponent->mvfTimeSteerLeft.m128_f32[0] = nfsVehicle->m_input->steeringInput.X > 0 ? driftComponent->mvfTimeSteerLeft.m128_f32[0] + timeStep.m128_f32[0] : 0;
+        driftComponent->mvfTimeSteerRight.m128_f32[0] = nfsVehicle->m_input->steeringInput.X < 0 ? driftComponent->mvfTimeSteerRight.m128_f32[0] + timeStep.m128_f32[0] : 0;
+        driftComponent->mvfMaxSlipAngle.m128_f32[0] = fmaxf(driftComponent->mvfRearSlipAngle.m128_f32[0], fmaxf(driftComponent->mvfRearSlipAngle.m128_f32[0] * -1.f, driftComponent->mvfRearSlipAngle.m128_f32[0]));
 
-        //UpdateDriftAngle(rigidBody, driftComponent, bDriftComp);
-        bDriftComp->UpdateDriftAngle(nfsVehicle);
-        bDriftComp->UpdateDriftScale(nfsVehicle, driftComponent);
-        if (fabsf(bDriftComp->driftAngle) < bDriftComp->maxDriftAngle && fabsf(bDriftComp->driftAngle) <= driftComponent->mpParams->driftScaleParams->Drift_angle_to_exit_drift || nfsVehicle->m_vehicleState == NFSVehicleState_Collided)
+        //UpdateDriftAngle(rigidBody, driftComponent);
+        UpdateDriftAngle(nfsVehicle);
+        UpdateDriftScale(nfsVehicle, driftComponent);
+        if (fabsf(driftComponent->mvfCurrentDriftAngle.m128_f32[0]) < driftComponent->mvfCurrentDriftAngle.m128_f32[1]
+            && fabsf(driftComponent->mvfCurrentDriftAngle.m128_f32[0]) <= driftComponent->mpParams->driftScaleParams->Drift_angle_to_exit_drift
+            || nfsVehicle->m_vehicleState == NFSVehicleState_Collided)
         {
-            bDriftComp->isExitingDrift = true;
-            bDriftComp->exitDriftTimer = driftComponent->mpParams->driftScaleParams->Starting_drift_scale_after_scandinavian_flick;
+            driftComponent->isExitingDrift = true;
+            driftComponent->mvfTimeSinceExittingDrift.m128_f32[1] = driftComponent->mpParams->driftScaleParams->Starting_drift_scale_after_scandinavian_flick;
             return;
         }
-        nfsVehicle->m_raceCarInputState.inputSteering =
-            bDriftComp->RemapSteeringForDrift(driftComponent, nfsVehicle->m_input->steeringInput.X, slipAngleDegrees, nfsVehicle->m_raceCar->mVehicleTuning.maxSteeringAngle, nfsVehicle->m_steeringInterface);
-        DriftSideForce(nfsVehicle, driftComponent, bDriftComp, rigidBody);
+        //nfsVehicle->m_raceCarInputState.inputSteering =
+        //    bDriftComp->RemapSteeringForDrift(driftComponent, nfsVehicle->m_input->steeringInput.X, slipAngleDegrees, nfsVehicle->m_raceCar->mVehicleTuning.maxSteeringAngle, nfsVehicle->m_steeringInterface);
+        DriftSideForce(nfsVehicle, driftComponent, rigidBody);
         DriftSpeedRetention(nfsVehicle, driftComponent, rigidBody);
-        DriftTorque(nfsVehicle, driftComponent, bDriftComp, rigidBody, timeStep);
-        ApplyDriftDamping(nfsVehicle, driftComponent, bDriftComp, rigidBody, timeStep);
+        DriftTorque(nfsVehicle, driftComponent, rigidBody, timeStep);
+        ApplyDriftDamping(nfsVehicle, driftComponent, rigidBody, timeStep);
 
-        bDriftComp->timeSinceDriftExit = 0;
+        driftComponent->mvfTimeSinceExittingDrift.m128_f32[0] = 0;
     }
-    else if (bDriftComp->isExitingDrift) UpdateDriftExit(nfsVehicle, driftComponent, bDriftComp);
+    else if (driftComponent->isExitingDrift)
+        UpdateDriftExit(nfsVehicle, driftComponent);
 }
 
-void UpdatePostDriftExit(NFSVehicle* const nfsVehicle, DriftComponent* driftComponent, RevivalDriftComponent* bDriftComp)
+void UpdatePostDriftExit(NFSVehicle* const nfsVehicle, DriftComponent* driftComponent)
 {
-    if (!bDriftComp->isDrifting)
+    if (!driftComponent->isDrifting)
     {
         __m128 timeStep = _mm_shuffle_ps({ nfsVehicle->m_currentUpdateDt }, { nfsVehicle->m_currentUpdateDt }, 0);
-        bDriftComp->timeSinceDriftExit += timeStep.m128_f32[0];
-        bDriftComp->timeSteeringLeft = 0;
-        bDriftComp->timeSteeringRight = 0;
-        bDriftComp->yawDamping = { 0,0,0,0 };
-        bDriftComp->angDamping = { 0,0,0,0 };
-        driftComponent->mvfDriftYawDamping = { 0,0,0,0 };
-
+        driftComponent->mvfTimeDrifting.m128_f32[0] = 0;
+        driftComponent->mvfTimeSinceExittingDrift.m128_f32[0] += timeStep.m128_f32[0];
+        driftComponent->mvfTimeSinceExittingDrift.m128_f32[1] = 0;
+        driftComponent->mvfTimeSteerLeft.m128_f32[0] = 0;
+        driftComponent->mvfTimeSteerRight.m128_f32[0] = 0;
+        driftComponent->mvfDriftYawDamping.m128_f32[0] = 0;
+        driftComponent->mvfDriftYawDamping.m128_f32[1] = 0;
         driftComponent->mvfCurrentDriftAngle = { 0,0,0,0 };
+        driftComponent->mvfCurrentDriftAngle.m128_f32[0] = 0;
+        driftComponent->mvfCurrentDriftAngle.m128_f32[1] = 0;
+        driftComponent->mvfDriftScale.m128_f32[0] = 0;
         driftComponent->mvfMaintainedSpeed = { 0,0,0,0 };
-        bDriftComp->driftAngle = 0;
-        bDriftComp->driftScale = 0;
-        bDriftComp->maxDriftAngle = 0;
         driftComponent->mvfDriftScale = { 0,0,0,0 };
-        bDriftComp->exitDriftTimer = 0;
-        bDriftComp->driftExitDampingFactor = 0;
         driftComponent->mvfCounterSteerSideMag = { 0,0,0,0 };
         driftComponent->mvfSideForceMagnitude = { 0,0,0,0 };
         driftComponent->currentYawTorque = 0;
     }
 }
+
+void __fastcall UpdateDrift_Orig(DriftComponent* driftComponent, const __m128* lvfGasInput, const __m128* lvfBrakeInput, const __m128* lvfSteeringInput, const __m128* lvbSteeringUsingWheel, HandbrakeComponent& lpHandbrake, const class RaceCarPhysicsObject* lpRaceCar, SteeringComponent& lpSteeringComponent, const class SteeringParams& lpSteeringParams, const __m128& lvfAverageSurfaceGripFactor, const __m128& lvfTimeStep, const __m128& lvfInvTimeStep)
+{
+    NFSVehicle& nfsVehicle = **(NFSVehicle**)lpRaceCar;
+    driftComponent->mvfRearSlipAngle.m128_f32[0] = nfsVehicle.m_sideSlipAngle * 180.f * 0.31830987f;
+    driftComponent->mvfMaxSlipAngle.m128_f32[0] = nfsVehicle.m_sideSlipAngle * 180.f * 0.31830987f;
+    CheckForEnteringDrift(driftComponent->mpChassisRigidBody->nfsVehicle, driftComponent);
+    UpdateDrift(driftComponent->mpChassisRigidBody->nfsVehicle, driftComponent, driftComponent->mpChassisRigidBody);
+    UpdatePostDriftExit(driftComponent->mpChassisRigidBody->nfsVehicle, driftComponent);
+}
+
+float __fastcall RemapSteeringForDrift_Orig(DriftComponent* driftComp, float steeringInput, float slipAngleDegrees, float maxSteeringAngle, SteeringComponent& lpSteeringComponent)
+{
+    // stop the game from normally calculating this because it'll lock up the steering with the new drift code
+    return steeringInput;
+}
+
 #endif // REVIVAL_FUNCTIONS_REGION 
 
 DWORD WINAPI Start(LPVOID lpParam)
@@ -320,85 +342,17 @@ DWORD WINAPI Start(LPVOID lpParam)
     freopen_s(&pFile, "CONOUT$", "w", stderr);
     SetWindowTextW(GetConsoleWindow(), L"Need for Speed™ Revival");
     #endif
-    
-    const int TICKS_PER_SECOND = 30;
-    const int SKIP_TICKS = 1000 / TICKS_PER_SECOND;
-    const int MAX_FRAMESKIP = 5;
-    DWORD nextTick = GetTickCount();
-    int loops;
-    float interpolation;
 
     HWND gameWindow = NULL;
-    bool hasFocus;
     uintptr_t game = (uintptr_t)GetModuleHandle(NULL);
-    NFSVehicle* nfsVehicle = NULL;
-    DriftComponent* driftComponent = NULL;
-    RaceRigidBody* rigidBody = NULL;
-    uintptr_t nfsVehicleBase = game + 0x02C431A0;
+    //NFSVehicle* nfsVehicle = NULL;
+    //DriftComponent* driftComponent = NULL;
+    //RaceRigidBody* rigidBody = NULL;
+    //uintptr_t nfsVehicleBase = game + 0x02C431A0;
     uintptr_t gameContext = game + 0x0289CDC0;
     Debug("gameContext: %I64X\n", gameContext);
-    RevivalDriftComponent bDriftComp{};
-
-    while (1)
-    {
-        /*while (gameWindow != FindWindowA(NULL, "Need for Speed™"))
-        {
-            gameWindow = FindWindowA(NULL, "Need for Speed™");
-        }
-        bool hasFocus = GetForegroundWindow() == gameWindow;*/
-        nfsVehicle = (NFSVehicle*)FindDMAAddy(GetCurrentProcess(), nfsVehicleBase, { 0x28, 0x20, 0x0, 0xD8, 0x0 });
-
-        // Check to see whether or not the NFSVehicle pointer is valid
-        float nfsVehicleChecker;
-        float nfsVehicleChecker1;
-
-        ReadProcessMemory(GetCurrentProcess(), (BYTE*)(uintptr_t)nfsVehicle + 0x64, &nfsVehicleChecker, sizeof(nfsVehicleChecker), nullptr);
-        ReadProcessMemory(GetCurrentProcess(), (BYTE*)(uintptr_t)nfsVehicle + 0x68, &nfsVehicleChecker1, sizeof(nfsVehicleChecker1), nullptr);
-        bool isNFSVehicleValid = nfsVehicleChecker == 150 && nfsVehicleChecker1 == 10;
-        //bool isNFSVehicleValid = nfsVehicle->m_speedCheatValue == 150 && nfsVehicle->m_jumpCheatValue == 10;
-
-        loops = 0;
-        while (IsGameTicking(nextTick, loops, MAX_FRAMESKIP))
-        {
-            if (isNFSVehicleValid)
-            {
-                if (nfsVehicle->m_vehicleMode == VmStarted)
-                {
-                    //Debug("deltaTime: %f\n", nfsVehicle->deltaTime);
-                    float angVelDeg{};
-                    driftComponent = nfsVehicle->m_driftComponent;
-                    rigidBody = driftComponent->mpChassisRigidBody;
-                    driftComponent->mpParams->driftTriggerParams->Minimum_speed_to_enter_drift = 9999.f;
-
-                    bDriftComp.CheckForEnteringDrift(nfsVehicle, driftComponent);
-                    UpdateDrift(nfsVehicle, driftComponent, &bDriftComp, rigidBody);
-                    UpdatePostDriftExit(nfsVehicle, driftComponent, &bDriftComp);
-
-                    /*
-                    //Uncomment block to allow adding force upwards by pressing numpad 8, useful for exploring out of bounds and making other players say wtf
-                    if (GetAsyncKeyState(VK_NUMPAD8) && hasFocus)
-                    {
-                        //Debug("nfsVehicleAddress: %I64X\n", nfsVehicle);
-                        Matrix44 matrix;
-                        __m128 upVector = GetTransform(rigidBody, &matrix)->yAxis;
-                        float dT = GetDeltaTime(nfsVehicle);
-                        //Debug("deltaTime: %f\n", dT);
-                        //Debug("deltaTimeAddress: %I64X\n", &dT);
-                        //Debug("driftComponentAddress: %I64X\n", driftComponent);
-                        __m128 lvfTimeStep = { dT,dT,dT,dT };
-                        __m128 force = { 0, 300.f, 0, 0 };
-                        __m128 finalForce = _mm_mul_ps(upVector, force);
-                        //Debug("rigidBodyAddress: %I64X\n", rigidBody);
-                        AddWorldCOMForceLogged(rigidBody, &finalForce, &lvfTimeStep);
-                        Debug("Adding force!\n");
-                    }
-                    */
-                }
-            }
-            nextTick += SKIP_TICKS;
-            loops++;
-        }
-    }
+    InjectHook(0x144197250, UpdateDrift_Orig);
+    InjectHook(0x1441967A0, RemapSteeringForDrift_Orig);
     return 0;
 }
 
