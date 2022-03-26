@@ -26,7 +26,7 @@ void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& dr
             driftComp.pad_0017 = DriftState_Entering;
             driftComp.mvfMaintainedSpeed.m128_f32[0] = sign(steering);
             driftComp.currentYawTorque = 0.f;
-            Debug("Entered drift!\n");
+            DebugLogPrint("Entered drift!\n");
         }
     }
 
@@ -109,7 +109,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
         {
             driftComp.pad_0017 = DriftState_Out;
             RevivalDriftComponent::ResetDrift(driftComp);
-            Debug("Exited drift!\n");
+            DebugLogPrint("Exited drift!\n");
             return;
         }
 
@@ -127,12 +127,12 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
         if (absSlipAngle < s_GlobalDriftParams.mAngleToExitDrift && (driftComp.pad_0017 == DriftState_Exiting || isCountersteering))
         {
             driftComp.pad_0017 = DriftState_Out;
-            Debug("Exited drift!\n");
+            DebugLogPrint("Exited drift!\n");
         }
         else if (absSlipAngle >= angleToEnterDrift)
         {
             driftComp.pad_0017 = DriftState_In;
-            Debug("Drifting!\n");
+            DebugLogPrint("Drifting!\n");
 
             // reset timer when steering in the opposite direction or not steering at all
             if (driftComp.mvfTimeSteerLeft.m128_f32[1] * steering <= 0.f)
@@ -194,7 +194,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
                 yawSpeedInDrift = (yawSpeedInDrift - driftComp.currentYawTorque) * externalAngVelScale + driftComp.currentYawTorque;
                 // clamp to mMaxYawSpeedInDrift
                 yawSpeedInDrift = fminf(fmaxf(yawSpeedInDrift, -s_GlobalDriftParams.mMaxYawSpeedInDrift), s_GlobalDriftParams.mMaxYawSpeedInDrift);
-                Debug("Yaw speed = %g\n", yawSpeedInDrift);
+                DebugLogPrint("Yaw speed = %g\n", yawSpeedInDrift);
                 SetVehicleYaw(nfsVehicle, angVel.y, yawSpeedInDrift, dT);
             }
             driftComp.mvfTimeSteerLeft.m128_f32[0] = fminf(driftComp.mvfTimeSteerLeft.m128_f32[0] + dT, s_GlobalDriftParams.mMaxSteeringTime);
@@ -202,12 +202,12 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
         else if (driftComp.pad_0017 != DriftState_Entering)
         {
             driftComp.pad_0017 = DriftState_Exiting;
-            Debug("Exiting drift!\n");
+            DebugLogPrint("Exiting drift!\n");
         }
         else if (isCountersteering)
         {
             driftComp.pad_0017 = DriftState_Out;
-            Debug("Exited drift!\n");
+            DebugLogPrint("Exited drift!\n");
         }
         else if (driftComp.currentYawTorque != 0.f)
         {
@@ -232,7 +232,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
             // a much larger yaw accel amount is used here compared to when a drift has been fully entered
             // this is in order to make it easier to fully enter a controlled drift at lower speeds or when there might be too much grip to kick the back out
             float newYawSpeed = driftComp.currentYawTorque + (driftComp.mvfMaintainedSpeed.m128_f32[0] * (1.f - saRatio) * externalAngVelScale * yawAccelScaleVsSpeed);
-            Debug("Yaw speed = %g\n", newYawSpeed);
+            DebugLogPrint("Yaw speed = %g\n", newYawSpeed);
             SetVehicleYaw(nfsVehicle, angVel.y, newYawSpeed, dT);
         }
 
@@ -251,7 +251,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
             if (yawSpeed * newYawSpeed < 0.f)
                 newYawSpeed = 0.f;
 
-            Debug("Yaw speed = %g\n", newYawSpeed);
+            DebugLogPrint("Yaw speed = %g\n", newYawSpeed);
             SetVehicleYaw(nfsVehicle, angVel.y, newYawSpeed, dT);
         }
 

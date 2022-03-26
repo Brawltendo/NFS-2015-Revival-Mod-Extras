@@ -78,7 +78,7 @@ DWORD WINAPI Start(LPVOID lpParam)
     HWND gameWindow = NULL;
     uintptr_t game = (uintptr_t)GetModuleHandle(NULL);
     uintptr_t gameContext = game + 0x0289CDC0;
-    Debug("gameContext: %I64X\n", gameContext);
+    DebugLogPrint("gameContext: %I64X\n", gameContext);
 
     PatchDampPitchYawRoll();
     InjectHook(0x144197250, UpdateDrift_Orig);

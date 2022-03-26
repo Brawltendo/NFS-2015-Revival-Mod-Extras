@@ -4,9 +4,9 @@
 #include "NFSClasses.h"
 
 #ifdef _DEBUG
-# define Debug(fmtstr, ...) printf(fmtstr, ##__VA_ARGS__)
+# define DebugLogPrint(fmtstr, ...) printf(fmtstr, ##__VA_ARGS__)
 #else
-# define Debug(fmtstr, ...)
+# define DebugLogPrint(fmtstr, ...)
 #endif
 
 constexpr auto PI = 3.14159f;
