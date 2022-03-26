@@ -129,14 +129,6 @@ static const DriftParameters s_GlobalDriftParams =
 	/* mCanEnterDriftWithHandbrake   */  true,
 };
 
-float GetAvgRearSlip(class DriftComponent* driftComponent);
-void CheckForEnteringDrift(class NFSVehicle* nfsVehicle, DriftComponent* driftComp);
-void UpdateDriftAngle(class NFSVehicle* nfsVehicle);
-void UpdateDriftScale(class NFSVehicle* nfsVehicle, DriftComponent* const driftComp);
-bool IsChainingDrift(class DriftComponent* driftComp);
-void UpdateCounterSteeringSideMagnitude(class NFSVehicle* const nfsVehicle, class DriftComponent* driftComp, const float lvfSteering, const float localAngVelDegrees, const float lvfTimeStep);
-float RemapSteeringForDrift(class DriftComponent* const driftComp, const float steeringInput, const float slipAngleDegrees, const float maxSteeringAngle, class SteeringComponent* lpSteeringComponent);
-
 namespace RevivalDriftComponent
 {
 	// Checks for whether a controlled drift can be initiated, and sets up any other values that need to be ready before the main drift functions
@@ -146,5 +138,3 @@ namespace RevivalDriftComponent
 	void ResetDrift(DriftComponent& driftComp);
 	void Update(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int numWheelsOnGround);
 }
-
-void MW05Drift_Update(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp);
