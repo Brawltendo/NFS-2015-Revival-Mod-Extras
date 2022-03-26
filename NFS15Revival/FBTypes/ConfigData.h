@@ -2,7 +2,6 @@
 #include <xmmintrin.h>
 #include "NFSEnums.h"
 
-using namespace std;
 
 class GearData
 {

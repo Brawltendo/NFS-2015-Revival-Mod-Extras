@@ -67,16 +67,23 @@ float sign(float in, float scale)
 		return 1 * fabsf(scale);
 	if (in < 0)
 		return -1 * fabsf(scale);
-	else return 0;
+	else
+		return 0;
+
+}
+
+float sign(float in)
+{
+	if (in > 0.f)
+		return 1.f;
+	if (in < 0.f)
+		return -1.f;
+	else
+		return 0.f;
 
 }
 
 float GetSpeedMph(NFSVehicle* nfsVehicle)
 {
 	return nfsVehicle->m_forwardSpeed * 2.2369399f;
-}
-
-float RadiansToDegrees(float radian) {
-	float pi = 3.14159f;
-	return(radian * (180 / pi));
 }

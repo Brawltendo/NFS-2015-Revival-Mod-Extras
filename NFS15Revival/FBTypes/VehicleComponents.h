@@ -14,6 +14,8 @@ public:
 
 class DriftComponent
 {
+	// any comments that aren't offsets tell what a field is being used for in the custom implementation
+
 public:	
 	char pad_0000[20]; //0x0000
 	bool isDrifting; //0x0014
@@ -21,12 +23,19 @@ public:
 
 	// 0x0016
 	bool isExitingDrift;
+
+	// 0x0017
+	// current drift state
 	char pad_0017;
 
 	class RaceRigidBody* mpChassisRigidBody; //0x0018
 	class DriftParams* mpParams; //0x0020
 	char pad_0028[8]; //0x0028
-	float currentYawTorque; //0x0030
+
+	// 0x0030
+	// current yaw speed (local Y angular vel)
+	float currentYawTorque;
+	
 	__int32 someEnum; //0x0034
 	char pad_0038[24]; //0x0038
 
@@ -35,14 +44,18 @@ public:
 	// index 1: drift exit timer
 	__m128 mvfTimeSinceExittingDrift;
 
-	__m128 mvfMaintainedSpeed; //0x0060
+	// 0x0060
+	// index 0: the drift direction
+	__m128 mvfMaintainedSpeed;
 
 	// 0x0070
 	// index 0: yaw damping
 	// index 1: exit damping factor
 	// index 2: side force damping scale
 	__m128 mvfDriftYawDamping;
-	__m128 mvfDriftScale; //0x0080
+	// 0x0080
+	// index 0: drift value 
+	__m128 mvfDriftScale;
 	__m128 mvfTimeDrifting; //0x0090
 	__m128 mvfSideForceMagnitude; //0x00A0
 	__m128 mvfPropSpeedMaintainAlongZ; //0x00B0
@@ -59,14 +72,23 @@ public:
 	__m128 mvfRearSlipAngle; //0x0110
 	__m128 mv_YawDamping_Spare_Spare_Spare; //0x0120
 	__m128 mv_MaintainSpeedForce_SideForce_Spare_Spare; //0x0130
-	__m128 mvfPreviousGasInput; //0x0140
+
+	// 0x0140
+	// index 0: time since throttle was released
+	__m128 mvfPreviousGasInput;
+
 	__m128 mvfMaxSlipAngle; //0x0150
 	__m128 mvfSlipAngleForDriftEntry; //0x0160
 	__m128 mvfTimePressingBrake; //0x0170
 	__m128 mvbPressedFullBrake; //0x0180
 	__m128 mvfTimeWithLowSlipAngle; //0x0190
 	__m128 mvbDriftingWithLowSlipAngle; //0x01A0
-	__m128 mvfTimeSteerLeft; //0x01B0
+
+	// 0x01B0
+	// index 0: time steering in a single direction
+	// index 1: current steering value during drift
+	__m128 mvfTimeSteerLeft;
+
 	__m128 mvfLastTimeSteerLeft; //0x01C0
 	__m128 mvfTimeSinceSteerLeft; //0x01D0
 	__m128 mvfTimeSteerRight; //0x01E0
@@ -144,30 +166,6 @@ public:
 	class RaceVehicleBrakesConfigData* brakesConfig; //0x0068
 	class PerformanceModificationComponent* perfModComponent; //0x0070
 }; //Size: 0x0078
-
-struct __declspec(align(4)) ModifiedValueCache
-{
-	float scalar;
-	float modifier;
-	bool useOverride;
-};
-
-struct __declspec(align(4)) PerformanceModifier
-{
-	RaceVehicleModificationType modificationType;
-	float modifier;
-};
-
-class __declspec(align(8)) PerformanceModificationComponent
-{
-public:
-	int64_t pad_0000[5];
-	class RaceVehiclePerformanceModifierData* m_vehicleModifications;
-	class RaceVehiclePerformanceModifierData* m_gearChangeTimeMods;
-	int64_t pad_0038[48];
-	ModifiedValueCache m_modifiedValueCache[159];
-	PerformanceModifier m_modifiers[159];
-}; static_assert(sizeof(PerformanceModificationComponent) == 0xE28, "PerfModComponent error");
 
 class SteeringComponent
 {

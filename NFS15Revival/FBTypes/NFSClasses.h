@@ -2,8 +2,6 @@
 #include <vector>
 #include "VehicleComponents.h"
 
-using namespace std;
-
 class PointGraph8
 {
 public:
@@ -39,10 +37,18 @@ struct Vector2
 
 struct Matrix44
 {
-	__m128 xAxis;
-	__m128 yAxis;
-	__m128 zAxis;
-	__m128 wAxis;
+	union
+	{
+		struct
+		{
+			__m128 xAxis;
+			__m128 yAxis;
+			__m128 zAxis;
+			__m128 wAxis;
+		};
+		float m[4][4];
+		__m128 mVec[4];
+	};
 };
 
 class CommonTuningState
@@ -601,6 +607,7 @@ public:
 }; //Size: 0x0020
 static_assert(sizeof(VehiclePhysicsJob_Input) == 0x20, "VehiclePhysicsJob_Input");
 
+//const int offset = offsetof(NFSVehicle, dynamicPhysEnt);
 //__declspec(align(8))
 class NFSVehicle
 {
@@ -612,9 +619,10 @@ public:
 	char pad_0028[60]; //0x0028
 	float m_speedCheatValue; //0x0064
 	float m_jumpCheatValue; //0x0068
-	char pad_006C[60]; //0x006C
-	class N00003CA7* N00002FB5; //0x00A8
-	char pad_00B0[16]; //0x00B0
+	char pad_006C[20]; //0x006C
+	__m128 m_linearVelocity; //0x0080
+	__m128 m_angularVelocity; //0x0090
+	char pad_00A0[32]; //0x00A0
 	class DynamicPhysicsEntity* dynamicPhysEnt; //0x00C0
 	char pad_00C8[32]; //0x00C8
 	class RigidBody* rigidBody; //0x00E8

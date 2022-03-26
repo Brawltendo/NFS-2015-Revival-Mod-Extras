@@ -4,14 +4,6 @@
 #include <fvec.h>
 #include <iostream>
 
-#ifdef _DEBUG
-# define Debug(fmtstr, ...) printf(fmtstr, ##__VA_ARGS__)
-#else
-# define Debug(fmtstr, ...)
-#endif
-
-typedef F32vec4 vec4;
-
 // Hooking code below comes from here: https://github.com/khalladay/hooking-by-example
 
 //allocates memory close enough to the provided targetAddr argument to be reachable
@@ -102,4 +94,14 @@ inline void InjectHook(ptrdiff_t address, void* hook)
 
 	//install the hook
 	memcpy((void*)address, jmpInstruction, sizeof(jmpInstruction));
+}
+
+inline void PatchInstruction(ptrdiff_t address, uint8_t patch[], size_t patchSize)
+{
+	DWORD oldProtect;
+	BOOL success = VirtualProtect((void*)address, patchSize, PAGE_EXECUTE_READWRITE, &oldProtect);
+	check(success);
+
+	// patch the instruction(s)
+	memcpy((void*)address, patch, patchSize);
 }

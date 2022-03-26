@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\util\graph.cpp" />
     <ClCompile Include="..\util\utils.cpp" />
     <ClCompile Include="source\PerformanceModification\PerformanceModification.cpp" />
     <ClCompile Include="source\DriftComponent\RevivalDriftComponent.cpp">
@@ -29,7 +30,9 @@
     <ClCompile Include="source\pch.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\util\graph.h" />
     <ClInclude Include="..\util\utils.h" />
+    <ClInclude Include="..\util\vectormath.h" />
     <ClInclude Include="source\PerformanceModification\PerformanceModification.h" />
     <ClInclude Include="source\DriftComponent\RevivalDriftComponent.h" />
     <ClInclude Include="..\FBTypes\NFSClasses.h" />
