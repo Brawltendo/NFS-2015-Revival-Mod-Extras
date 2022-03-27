@@ -14,6 +14,10 @@ constexpr auto Epsilon = 0.00000011920929;
 
 uintptr_t FindDMAAddy(HANDLE hProc, uintptr_t ptr, std::vector<unsigned int> offsets);
 float map(float s, float a1, float a2, float b1, float b2);
+// Clamps the input x within the bounds [min, max]
+float clamp(float x, float min, float max);
+// Clamps the input x within the bounds [0.0f, 1.0f]
+float clamp01(float x);
 class PointGraph8 initPointGraph8(__m128 curveData[10]);
 float EvaluatePointGraph8(class PointGraph8* pgIn, float xVal);
 float sign(float in, float scale);
@@ -48,49 +52,6 @@ float MphToMps(const float mph)
 {
 	return mph * 0.44703001f;
 }
-
-
-struct TableBase
-{
-	int NumEntries;
-	float MinArg;
-	float MaxArg;
-	float IndexMultiplier;
-};
-
-struct Table : TableBase
-{
-	Table(int numEntries, float min, float max, float indexMul, float* table)
-	{
-		NumEntries = numEntries;
-		MinArg = min;
-		MaxArg = max;
-		IndexMultiplier = indexMul;
-		pTable = table;
-	}
-	float* pTable;
-
-	float GetValue(float input)
-	{
-		const int length = NumEntries;
-		const float index = (input - MinArg) * IndexMultiplier;
-		const int i = (int)index;
-
-		if (i < 0 || index < 0.f)
-			return pTable[0];
-		if (i >= (length - 1))
-			return pTable[length - 1];
-
-		float ind = i;
-		if (ind > index)
-			ind -= 1.f;
-
-		float* curVal = &pTable[i];
-		float delta = index - ind;
-		return (1.f - delta) * curVal[0] + delta * curVal[1];
-	}
-};
-
 
 
 // anonymous namespace so the compiler stops complaining and these can actually be used in other places without having to redefine them

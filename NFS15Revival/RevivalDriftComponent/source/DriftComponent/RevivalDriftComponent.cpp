@@ -25,6 +25,17 @@ void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& dr
         {
             driftComp.pad_0017 = DriftState_Entering;
             driftComp.mvfMaintainedSpeed.m128_f32[0] = sign(steering);
+
+            // set up initial drift scale based on how a drift was entered
+            // if multiple drift entry conditions have been met, there will be priority on certain actions over others
+            // handbraking has the highest priority, braking has the second highest, and gas stabbing has the lowest
+            // drift entry from slip angle doesn't actually use DriftState_Entering, but the scale should be initialized regardless
+            if (isHandbraking || isSlipping)
+                driftComp.mvfMaintainedSpeed.m128_f32[1] = 1.f;
+            else if (isBraking)
+                driftComp.mvfMaintainedSpeed.m128_f32[1] = 0.4f;
+            else if (isGasStab)
+                driftComp.mvfMaintainedSpeed.m128_f32[1] = 0.175f;
             driftComp.currentYawTorque = 0.f;
             DebugLogPrint("Entered drift!\n");
         }
@@ -85,6 +96,7 @@ void RevivalDriftComponent::ResetDrift(DriftComponent& driftComp)
     driftComp.mvfTimeSteerLeft.m128_f32[0] = 0.f;
     driftComp.mvfTimeSteerLeft.m128_f32[1] = 0.f;
     driftComp.mvfMaintainedSpeed.m128_f32[0] = 0.f;
+    driftComp.mvfMaintainedSpeed.m128_f32[1] = 1.f;
     driftComp.counterSteeringInDrift = false;
 }
 
@@ -105,7 +117,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
         vec4& vFwd   = SimdToVec4(matrix.zAxis);
         const float speedMps = nfsVehicle.m_forwardSpeed;
         // exit drift completely if any of these conditions are met
-        if (numWheelsOnGround <= 1 || speedMps <= s_GlobalDriftParams.mSpeedToExitDrift || speedMps <= MphToMps(13.5f))
+        if (numWheelsOnGround <= 1 || speedMps <= s_GlobalDriftParams.mSpeedToExitDrift || speedMps <= MphToMps(13.f))
         {
             driftComp.pad_0017 = DriftState_Out;
             RevivalDriftComponent::ResetDrift(driftComp);
@@ -142,9 +154,9 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
             vec4 fwdVel = linVel - Dot(linVel, vUp);
             float fwdVelMag = VecLength(fwdVel);
             float saRatio = (absSlipAngle - angleToEnterDrift) / (s_GlobalDriftParams.mAngleForMaxDriftScale - angleToEnterDrift);
-            saRatio = fminf(fmaxf(saRatio, 0.f), 1.f); // clamp 0-1
+            saRatio = clamp01(saRatio);
             float speedRatio = (fwdVelMag - s_GlobalDriftParams.mSpeedForZeroSpeedMaintenance) / (s_GlobalDriftParams.mSpeedForFullSpeedMaintenance - s_GlobalDriftParams.mSpeedForZeroSpeedMaintenance);
-            speedRatio = fminf(fmaxf(speedRatio, 0.f), 1.f); // clamp 0-1
+            speedRatio = clamp01(speedRatio);
             vec4 normalizedVel = fwdVel * (1.f / fwdVelMag);
             float maintainSpeedAmount = s_GlobalDriftParams.mDriftMaintainSpeedAmount * dT * externalForcesScale * saRatio * speedRatio;
             vec4 maintainSpeedForce = linVel + ((vFwd - normalizedVel) * s_GlobalDriftParams.mDriftMaintainSpeedScale + normalizedVel) * maintainSpeedAmount;
@@ -193,7 +205,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
 
                 yawSpeedInDrift = (yawSpeedInDrift - driftComp.currentYawTorque) * externalAngVelScale + driftComp.currentYawTorque;
                 // clamp to mMaxYawSpeedInDrift
-                yawSpeedInDrift = fminf(fmaxf(yawSpeedInDrift, -s_GlobalDriftParams.mMaxYawSpeedInDrift), s_GlobalDriftParams.mMaxYawSpeedInDrift);
+                yawSpeedInDrift = clamp(yawSpeedInDrift, -s_GlobalDriftParams.mMaxYawSpeedInDrift, s_GlobalDriftParams.mMaxYawSpeedInDrift);
                 DebugLogPrint("Yaw speed = %g\n", yawSpeedInDrift);
                 SetVehicleYaw(nfsVehicle, angVel.y, yawSpeedInDrift, dT);
             }
@@ -201,11 +213,13 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
         }
         else if (driftComp.pad_0017 != DriftState_Entering)
         {
+            // start exiting the drift if below the minimum slip angle but are past entering the drift
             driftComp.pad_0017 = DriftState_Exiting;
             DebugLogPrint("Exiting drift!\n");
         }
         else if (isCountersteering)
         {
+            // if we're countersteering while entering the drift and are below the minimum slip angle, end the drift
             driftComp.pad_0017 = DriftState_Out;
             DebugLogPrint("Exited drift!\n");
         }
@@ -224,14 +238,16 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
             // yaw acceleration scales with speed
             float yawAccelScaleVsSpeed = (yawAccelScaleForHighSpeed - yawAccelScaleForLowSpeed) * speedRatio + yawAccelScaleForLowSpeed;
             if (yawAccelScaleForLowSpeed >= yawAccelScaleForHighSpeed)
-                yawAccelScaleVsSpeed = fminf(fmaxf(yawAccelScaleVsSpeed, yawAccelScaleForHighSpeed), yawAccelScaleForLowSpeed);
+                yawAccelScaleVsSpeed = clamp(yawAccelScaleVsSpeed, yawAccelScaleForHighSpeed, yawAccelScaleForLowSpeed);
             else
-                yawAccelScaleVsSpeed = fminf(fmaxf(yawAccelScaleVsSpeed, yawAccelScaleForLowSpeed), yawAccelScaleForHighSpeed);
+                yawAccelScaleVsSpeed = clamp(yawAccelScaleVsSpeed, yawAccelScaleForLowSpeed, yawAccelScaleForHighSpeed);
 
+            float newYawSpeed = driftComp.currentYawTorque;
             // invert slip angle ratio here so that yaw accel is subtracted or stops being added when the slip angle is >= the angle to enter a drift
             // a much larger yaw accel amount is used here compared to when a drift has been fully entered
             // this is in order to make it easier to fully enter a controlled drift at lower speeds or when there might be too much grip to kick the back out
-            float newYawSpeed = driftComp.currentYawTorque + (driftComp.mvfMaintainedSpeed.m128_f32[0] * (1.f - saRatio) * externalAngVelScale * yawAccelScaleVsSpeed);
+            // yaw accel is also scaled based on the drift entry action 
+            newYawSpeed += driftComp.mvfMaintainedSpeed.m128_f32[0] * (1.f - saRatio) * externalAngVelScale * yawAccelScaleVsSpeed * driftComp.mvfMaintainedSpeed.m128_f32[1];
             DebugLogPrint("Yaw speed = %g\n", newYawSpeed);
             SetVehicleYaw(nfsVehicle, angVel.y, newYawSpeed, dT);
         }

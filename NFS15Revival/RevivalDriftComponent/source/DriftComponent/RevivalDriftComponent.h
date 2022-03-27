@@ -3,8 +3,7 @@
 #include <corecrt_math.h>
 #include <xmmintrin.h>
 #include "PerformanceModification/PerformanceModification.h"
-#include <util/graph.h>
-#include "util\utils.h"
+#include "util/utils.h"
 
 enum DriftState
 {

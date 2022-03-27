@@ -13,25 +13,46 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\FBTypes">
+      <UniqueIdentifier>{8c601454-9820-494a-90bb-0f52bfe23a59}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\math">
+      <UniqueIdentifier>{3c691898-2e94-4850-a615-801a90df7d25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\util">
+      <UniqueIdentifier>{fd8b19c0-e69a-4f9c-9785-ddee38dc6b50}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\util">
+      <UniqueIdentifier>{23f93ff5-aa3a-440c-bea9-e683a7a0c3db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DriftComponent">
+      <UniqueIdentifier>{79cc0a22-9fb4-4ded-82a4-674be99dd9be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes">
+      <UniqueIdentifier>{0728fa8d-05b1-4ff8-a69a-d84695ab1446}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\PerformanceModification">
+      <UniqueIdentifier>{1aabba8d-fa62-43bd-9e3a-33e8ea9d9cab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\PerformanceModification">
+      <UniqueIdentifier>{48b4ba4f-8b93-4dbb-98fa-f73651cca217}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\DriftComponent\RevivalDriftComponent.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="source\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="source\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\PerformanceModification\PerformanceModification.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\util\utils.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\util</Filter>
     </ClCompile>
-    <ClCompile Include="..\util\graph.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="source\DriftComponent\RevivalDriftComponent.cpp">
+      <Filter>Source Files\DriftComponent</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FBTypes\PerformanceModification\PerformanceModification.cpp">
+      <Filter>Source Files\FBTypes\PerformanceModification</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -48,19 +69,16 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FBTypes\NFSClasses.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\FBTypes</Filter>
     </ClInclude>
-    <ClInclude Include="source\PerformanceModification\PerformanceModification.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\math\vectormath.h">
+      <Filter>Header Files\math</Filter>
     </ClInclude>
     <ClInclude Include="..\util\utils.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\util</Filter>
     </ClInclude>
-    <ClInclude Include="..\util\vectormath.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\util\graph.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\FBTypes\PerformanceModification\PerformanceModification.h">
+      <Filter>Header Files\FBTypes\PerformanceModification</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

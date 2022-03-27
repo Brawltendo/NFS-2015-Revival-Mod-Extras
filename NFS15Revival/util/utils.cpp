@@ -18,6 +18,16 @@ float map(float in, float inMin, float inMax, float outMin, float outMax)
 	return outMin + (in - inMin) * (outMax - outMin) / (inMax - inMin);
 }
 
+float clamp(float x, float min, float max)
+{
+	return fminf(fmaxf(x, min), max);
+}
+
+float clamp01(float x)
+{
+	return fminf(fmaxf(x, 0.f), 1.f);
+}
+
 // Creates a PointGraph from a 4D vector array. The original arrays from the vehicle configs are never greater or less than 10 members.
 // First two members of array represent min and max x/y values respectively; all following indices are for each x/y curve point, x being the input, and y being the output.
 PointGraph8 initPointGraph8(__m128 curveData[10])

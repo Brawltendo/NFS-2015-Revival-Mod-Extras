@@ -46,6 +46,7 @@ public:
 
 	// 0x0060
 	// index 0: the drift direction
+	// index 1: drift entry yaw accel scale
 	__m128 mvfMaintainedSpeed;
 
 	// 0x0070
