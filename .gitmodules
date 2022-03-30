@@ -1,3 +1,6 @@
 [submodule "NFS15Revival/imgui"]
 	path = NFS15Revival/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "NFS15Revival/kiero"]
+	path = NFS15Revival/kiero
+	url = https://github.com/Rebzzel/kiero.git
