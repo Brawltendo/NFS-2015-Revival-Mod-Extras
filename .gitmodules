@@ -1,0 +1,3 @@
+[submodule "NFS15Revival/imgui"]
+	path = NFS15Revival/imgui
+	url = https://github.com/ocornut/imgui.git

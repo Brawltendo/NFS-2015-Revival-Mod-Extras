@@ -2,13 +2,19 @@
 #include "psapi.h"
 #include "main.h"
 #include "util\utils.h"
+#include "util\memoryutils.h"
+#ifdef _DEBUG
+#include <assert.h>
+#include "util\debug\render\DebugRenderer.h"
+#include "util\debug\render\DebugRendererFB.h"
+#endif
 #include "DriftComponent\RevivalDriftComponent.h"
 #include "NFSClasses.h"
 #include <algorithm>
 
 
 
-#ifndef PATCH_FUNCTIONS_REGION
+#pragma region PATCH_FUNCTIONS_REGION
 
 void __fastcall UpdateDrift_Orig(DriftComponent* driftComponent, const __m128* lvfGasInput, const __m128* lvfBrakeInput, const __m128* lvfSteeringInput, const __m128* lvbSteeringUsingWheel, HandbrakeComponent& lpHandbrake, const class RaceCarPhysicsObject* lpRaceCar, SteeringComponent& lpSteeringComponent, const class SteeringParams& lpSteeringParams, const __m128& lvfAverageSurfaceGripFactor, const __m128& lvfTimeStep, const __m128& lvfInvTimeStep)
 {
@@ -59,20 +65,23 @@ inline void PatchDampPitchYawRoll()
     
 }
 
-#endif // PATCH_FUNCTIONS_REGION 
+#pragma endregion PATCH_FUNCTIONS_REGION
 
 DWORD WINAPI Start(LPVOID lpParam)
 {
     Sleep(1000);
     FILE* pFile = nullptr;
 
-    // Initialize console in order to output useful debug data
     #ifdef _DEBUG
+    // Initialize console in order to output useful debug data
     AllocConsole();
     freopen_s(&pFile, "CONIN$", "r", stdin);
     freopen_s(&pFile, "CONOUT$", "w", stdout);
     freopen_s(&pFile, "CONOUT$", "w", stderr);
     SetWindowTextW(GetConsoleWindow(), L"Need for Speed™ Revival");
+
+    // start up debug renderer
+    //DebugRenderer::Init();
     #endif
 
     HWND gameWindow = NULL;
@@ -83,6 +92,10 @@ DWORD WINAPI Start(LPVOID lpParam)
     PatchDampPitchYawRoll();
     InjectHook(0x144197250, UpdateDrift_Orig);
     InjectHook(0x1441967A0, RemapSteeringForDrift_Orig);
+
+    #ifdef _DEBUG
+    fb::DebugRenderer::Init();
+    #endif
     return 0;
 }
 
@@ -98,6 +111,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     case DLL_PROCESS_DETACH:
         // detach from process
+        //kiero::shutdown();
         break;
 
     case DLL_THREAD_ATTACH:

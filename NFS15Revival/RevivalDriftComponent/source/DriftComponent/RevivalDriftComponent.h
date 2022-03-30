@@ -5,12 +5,41 @@
 #include "PerformanceModification/PerformanceModification.h"
 #include "util/utils.h"
 
+
+namespace fb
+{
+	// contains an eastl::vector with all spawned/active vehicle jobs
+	// that doesn't matter though, so all we want is the first element which happens to be at 0x28
+	struct RaceVehicleJobHandler
+	{
+		// player vehicle is the first element
+		static RaceVehicleJobHandler* m_instance;
+
+		void** m_physPreUpdateCallback;
+		char pad[0x8];
+		uintptr_t start;
+		uintptr_t end;
+		uint64_t num;
+		class NFSVehicle* m_vehicles[64];
+
+	}; static_assert(offsetof(RaceVehicleJobHandler, m_vehicles[0]) == 0x28, "NfsVehicle should be at 0x28");
+}
+
 enum DriftState
 {
 	DriftState_Out = 0,
 	DriftState_Entering = 1,
 	DriftState_In = 2,
 	DriftState_Exiting = 3,
+};
+
+enum DriftEntryReason
+{
+	DriftEntryReason_None,
+	DriftEntryReason_SlipAngle,
+	DriftEntryReason_Handbraking,
+	DriftEntryReason_Braking,
+	DriftEntryReason_GasStab
 };
 
 struct DriftParameters
@@ -44,7 +73,6 @@ struct DriftParameters
 	float mAngleForMidDriftScale;
 	// The slip angle to reach in order to use the full drift scale (highest yaw acceleration)
 	float mAngleForMaxDriftScale;
-	// The speed, in MPS, for 
 	float mSpeedForMidDriftScale;
 	// The speed required, in MPS, in order to completely exit a drift
 	float mSpeedToExitDrift;
@@ -90,10 +118,10 @@ struct DriftParameters
 
 static const DriftParameters s_GlobalDriftParams =
 {
-	/* mCSYawScaleForZeroSteerTime   */  1.5f,
-	/* mYawScaleForZeroSteerTime     */  0.5f,
-	/* mCSYawScaleForMaxSteerTime    */  2.5f,
-	/* mYawScaleForMaxSteerTime	     */  0.5f,
+	/* mCSYawScaleForZeroSteerTime   */  0.65f,
+	/* mYawScaleForZeroSteerTime     */  0.8f,
+	/* mCSYawScaleForMaxSteerTime    */  1.f,
+	/* mYawScaleForMaxSteerTime	     */  1.f,
 	/* mYawAccelScale                */  1.f,
 	/* mSlipAngleRatioScale          */  1.f,
 	/* mMaxSteeringTime	             */  2.f,
@@ -109,19 +137,19 @@ static const DriftParameters s_GlobalDriftParams =
 	/* mSpeedToExitDrift	         */  4.f,
 	/* mSpeedForZeroSpeedMaintenance */  0.f,
 	/* mSpeedForFullSpeedMaintenance */  2.3f,
-	/* mMaxYawSpeedInDrift	         */  2.f,
+	/* mMaxYawSpeedInDrift	         */  2.125f,
 	/* mDriftMaintainSpeedAmount     */  9.2f,
 	/* mDriftMaintainSpeedScale	     */  1.f,
 	/* mLowSpeedForYawAccelScale     */  0.f,
 	/* mHighSpeedForYawAccelScale    */  21.4f,
-	/* mYawAccelScaleForLowSpeed     */  3.f,
-	/* mYawAccelScaleForHighSpeed    */  1.f,
+	/* mYawAccelScaleForLowSpeed     */  1.65f,
+	/* mYawAccelScaleForHighSpeed    */  1.25f,
 	/* mSteeringThreshold	         */  0.3f,
 	/* mBrakeThreshold	             */  0.95f,
 	/* mThrottleThreshold	         */  0.95f,
 	/* mMinTimeForGasStab	         */  0.1f,
-	/* mMaxTimeForGasStab	         */  0.2f,
-	/* mOffGasTimeForExitingDrift    */  0.2f,
+	/* mMaxTimeForGasStab	         */  0.5f,
+	/* mOffGasTimeForExitingDrift    */  0.55f,
 	/* mCanEnterDriftWithBrake	     */  false,
 	/* mCanEnterDriftWithGasStab     */  false,
 	/* mCanEnterDriftWithSlipAngle   */  false,
@@ -130,10 +158,16 @@ static const DriftParameters s_GlobalDriftParams =
 
 namespace RevivalDriftComponent
 {
+
 	// Checks for whether a controlled drift can be initiated, and sets up any other values that need to be ready before the main drift functions
 	void PreUpdate(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int& numWheelsOnGround);
 	// Helps control the vehicle's yaw via external forces, both in and out of a controlled drift
 	void UpdateAutoSteer(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int numWheelsOnGround);
 	void ResetDrift(DriftComponent& driftComp);
 	void Update(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int numWheelsOnGround);
+
+	#ifdef _DEBUG
+	void PreUpdate_Debug(class NFSVehicle& nfsVehicle);
+	#endif
+
 }

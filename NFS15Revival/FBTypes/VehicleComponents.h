@@ -36,7 +36,9 @@ public:
 	// current yaw speed (local Y angular vel)
 	float currentYawTorque;
 	
-	__int32 someEnum; //0x0034
+	// 0x0034
+	// drift entry reason
+	int someEnum;
 	char pad_0038[24]; //0x0038
 
 	// 0x50

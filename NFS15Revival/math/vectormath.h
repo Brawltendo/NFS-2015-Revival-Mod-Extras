@@ -61,10 +61,7 @@ struct vec2
 
 	float& operator[](int i)
 	{
-		if (i > 1 || i < 0)
-			return;
-		else
-			return (&x)[i];
+		return (&x)[i];
 	}
 
 	vec2(const float f)
@@ -211,10 +208,7 @@ struct vec4
 
 	float& operator[](int i)
 	{
-		if (i > 3 || i < 0)
-			return;
-		else
-			return (&x)[i];
+		return (&x)[i];			
 	}
 
 	vec4  operator +  (const vec4& b) { return simdValue + b.simdValue; }

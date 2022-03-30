@@ -1,18 +1,14 @@
 #pragma once
-#include <vectormath.h>
+#include <math/vectormath.h>
 #include <vector>
 #include "NFSClasses.h"
-
 #ifdef _DEBUG
-# define DebugLogPrint(fmtstr, ...) printf(fmtstr, ##__VA_ARGS__)
-#else
-# define DebugLogPrint(fmtstr, ...)
+#include "debug/debug.h"
 #endif
 
 constexpr auto PI = 3.14159f;
 constexpr auto Epsilon = 0.00000011920929;
 
-uintptr_t FindDMAAddy(HANDLE hProc, uintptr_t ptr, std::vector<unsigned int> offsets);
 float map(float s, float a1, float a2, float b1, float b2);
 // Clamps the input x within the bounds [min, max]
 float clamp(float x, float min, float max);
@@ -57,8 +53,8 @@ float MphToMps(const float mph)
 // anonymous namespace so the compiler stops complaining and these can actually be used in other places without having to redefine them
 namespace
 {
+	#pragma region NFS_NATIVE_FUNCTIONS
 
-#ifndef NFS_NATIVE_FUNCTIONS
 	typedef PointGraph8* (__fastcall* _initPointGraph8FromCurveData)(PointGraph8* pointGraphIn, __m128 (*curveData)[10]);
 	typedef float(__fastcall* _PointGraph8__Evaluate)(int pgCount, float(*pgInX)[8], float(*pgInY)[8], float xVal);
 	typedef void(__fastcall* _AddWorldCOMForceLogged)(RaceRigidBody* rigidBody, __m128* force, __m128* lfTimeStep);
@@ -105,7 +101,8 @@ namespace
 	_UpdateSideForce UpdateSideForce = (_UpdateSideForce)0x144197FC0;
 	_ApplyDriftForces ApplyDriftForces = (_ApplyDriftForces)0x144193890;
 	_ApplyDamping ApplyDamping = (_ApplyDamping)0x1441935E0;
-#endif // NFS_NATIVE_FUNCTIONS
+
+	#pragma endregion NFS_NATIVE_FUNCTIONS
 
 	inline void SetVehicleYaw(NFSVehicle& nfsVehicle, float originalYaw, float targetYaw, float dT)
 	{	

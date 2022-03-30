@@ -1,11 +1,69 @@
 #include "pch.h"
 #include "RevivalDriftComponent.h"
-#include <algorithm>
 #include "NFSClasses.h"
+#include "util/memoryutils.h"
+#include <algorithm>
+
+#ifdef _DEBUG
+#include "util/debug/render/DebugRendererFB.h"
+#include <sstream>
+
+
+static NFSVehicle* s_playerVehicle = nullptr;
+
+void RevivalDriftComponent::PreUpdate_Debug(NFSVehicle& nfsVehicle)
+{
+    // get the player vehicle pointer
+    /*if (s_playerVehicle == nullptr)
+    {
+        uintptr_t game = (uintptr_t)GetModuleHandle(NULL);
+        std::vector<size_t> offsets { 0x0, 0x28 };
+        uintptr_t vehicleAddress = DerefPtr(game + 0x2C431A0, offsets);
+
+        if (vehicleAddress == (uintptr_t)&nfsVehicle)
+            s_playerVehicle = &nfsVehicle;
+    }*/
+}
+
+fb::RaceVehicleJobHandler* fb::RaceVehicleJobHandler::m_instance = (RaceVehicleJobHandler*)0x142C431A0;
+
+void GetPlayerVehiclePtr(NFSVehicle& nfsVehicle)
+{
+    static float showTextTimer = 0.f;
+
+    //std::stringstream str;
+    //str << "NfsVehicle Address:"; str << std::hex; str << fb::RaceVehicleJobHandler::m_instance->m_playerVehicle;
+    //fb::g_debugRender->drawText(-0.8f, 0.f, str.str().c_str(), fb::Color32(255u, 0u, 0u, 255u), 2.5f);
+
+    if (fb::RaceVehicleJobHandler::m_instance->m_vehicles[0] == &nfsVehicle)
+    {
+        if (s_playerVehicle != &nfsVehicle)
+            s_playerVehicle = &nfsVehicle;
+
+        if (showTextTimer <= 0.f)
+            showTextTimer = 3.f;
+
+        if (showTextTimer > 0.f)
+        {
+            uint8_t alpha = showTextTimer / 3.f * 255u;
+            fb::g_debugRender->drawText(-0.8f, 0.f, "Found player vehicle ptr!", fb::Color32(255u, 0u, 0u, alpha), 3.f);
+            showTextTimer = fmaxf(showTextTimer - fb::RaceVehicleJobHandler::m_instance->m_vehicles[0]->m_currentUpdateDt, 0.f);
+        }
+    }
+}
+
+#endif
 
 void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& driftComp, int& numWheelsOnGround)
 {
+#ifdef _DEBUG
+    
+#endif // _DEBUG
+    //GetPlayerVehiclePtr(nfsVehicle);
+    DebugLogPrint("Player vehicle ptr: %I64X\n", fb::RaceVehicleJobHandler::m_instance->m_vehicles[0]);
+
     float steering = nfsVehicle.m_raceCarInputState.inputSteering;
+    DriftEntryReason oldEntryReason = (DriftEntryReason)driftComp.someEnum;
 
     if (driftComp.pad_0017 == DriftState_Out && fabsf(steering) > s_GlobalDriftParams.mSteeringThreshold)
     {
@@ -29,14 +87,65 @@ void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& dr
             // set up initial drift scale based on how a drift was entered
             // if multiple drift entry conditions have been met, there will be priority on certain actions over others
             // handbraking has the highest priority, braking has the second highest, and gas stabbing has the lowest
-            // drift entry from slip angle doesn't actually use DriftState_Entering, but the scale should be initialized regardless
+            // drift entry from slip angle doesn't actually use anything that the other entry methods use, but the scale should be initialized regardless
             if (isHandbraking || isSlipping)
+            {
                 driftComp.mvfMaintainedSpeed.m128_f32[1] = 1.f;
+                driftComp.someEnum = isHandbraking ? DriftEntryReason_Handbraking : DriftEntryReason_SlipAngle;
+            }
             else if (isBraking)
+            {
                 driftComp.mvfMaintainedSpeed.m128_f32[1] = 0.4f;
+                driftComp.someEnum = DriftEntryReason_Braking;
+            }
             else if (isGasStab)
-                driftComp.mvfMaintainedSpeed.m128_f32[1] = 0.175f;
+            {
+                driftComp.mvfMaintainedSpeed.m128_f32[1] = 0.225f;
+                driftComp.someEnum = DriftEntryReason_GasStab;
+            }
             driftComp.currentYawTorque = 0.f;
+
+        #ifdef _DEBUG
+            {
+                static float showTextTimer = 0.f;
+
+                // draw debug only for the player vehicle
+                if (fb::RaceVehicleJobHandler::m_instance->m_vehicles[0] == &nfsVehicle)
+                {
+                    if (showTextTimer <= 0.f)
+                    {
+                        showTextTimer = 3.f;
+                    }
+                         
+                    if (showTextTimer > 0.f)
+                    {
+                        std::stringstream str;
+                        switch (driftComp.someEnum)
+                        {
+                        DriftEntryReason_None:
+                            str << "";
+                            break;
+                        DriftEntryReason_SlipAngle:
+                            str << Stringize(DriftEntryReason_SlipAngle);
+                            break;
+                        DriftEntryReason_Handbraking:
+                            str << Stringize(DriftEntryReason_Handbraking);
+                            break;
+                        DriftEntryReason_Braking:
+                            str << Stringize(DriftEntryReason_Braking);
+                            break;
+                        DriftEntryReason_GasStab:
+                            str << Stringize(DriftEntryReason_GasStab);
+                            break;
+                        }
+                        uint8_t alpha = /*showTextTimer / 3.f * */255u;
+                        fb::g_debugRender->drawText(-0.8f, 0.f, str.str().c_str(), fb::Color32(255u, 0u, 0u, alpha), 1.f);
+                        showTextTimer = fmaxf(showTextTimer - nfsVehicle.m_currentUpdateDt, 0.f);
+                    }
+                }
+            }
+        #endif
+
             DebugLogPrint("Entered drift!\n");
         }
     }
@@ -82,9 +191,27 @@ void RevivalDriftComponent::UpdateAutoSteer(NFSVehicle& nfsVehicle, DriftCompone
         // with zero throttle 10% of the total force will be applied so momentum can still be maintained in corners when the throttle needs to be released
         force *= fminf(fmaxf(nfsVehicle.m_raceCarInputState.inputGas, 0.1f), 1.f);
 
-        const vec4 sideForce(force * sign(dpSideVel) * sideForceScale);
-        const vec4 forwardForce(force * forwardForceScale);
-        vec4 autoSteerForce = (vRight * sideForce) + (vFwd * forwardForce);
+        vec4 sideForce(force * sign(dpSideVel) * sideForceScale);
+        sideForce *= vRight;
+        vec4 forwardForce(force * forwardForceScale);
+        forwardForce *= vFwd;
+
+    #ifdef _DEBUG
+        // draw debug forces only for the player vehicle
+        //if (fb::RaceVehicleJobHandler::m_instance->m_vehicles[0] == &nfsVehicle)
+        {
+            vec4 pos(nfsVehicle.m_raceCarInputState.matrix.wAxis);
+
+            // draw side force
+            vec4 scaledSideForce(sideForce / 1000.f + pos);
+            fb::g_debugRender->drawLine3d((float*)&pos, (float*)&scaledSideForce, fb::Color32(255u, 0u, 0u, 255u));
+            // draw forward force
+            vec4 scaledFwdForce(forwardForce / 1000.f + pos);
+            fb::g_debugRender->drawLine3d((float*)&pos, (float*)&scaledFwdForce, fb::Color32(0u, 255u, 0u, 255u));
+        }
+    #endif
+
+        vec4 autoSteerForce = sideForce + forwardForce;
         vec4 timestep(nfsVehicle.m_currentUpdateDt);
         AddWorldCOMForceLogged(driftComp.mpChassisRigidBody, &autoSteerForce.simdValue, &timestep.simdValue);
     }
@@ -93,6 +220,7 @@ void RevivalDriftComponent::UpdateAutoSteer(NFSVehicle& nfsVehicle, DriftCompone
 void RevivalDriftComponent::ResetDrift(DriftComponent& driftComp)
 {
     driftComp.currentYawTorque = 0.f;
+    driftComp.someEnum = DriftEntryReason_None;
     driftComp.mvfTimeSteerLeft.m128_f32[0] = 0.f;
     driftComp.mvfTimeSteerLeft.m128_f32[1] = 0.f;
     driftComp.mvfMaintainedSpeed.m128_f32[0] = 0.f;
