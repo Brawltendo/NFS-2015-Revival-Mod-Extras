@@ -19,10 +19,15 @@
 void __fastcall UpdateDrift_Orig(DriftComponent* driftComponent, const __m128* lvfGasInput, const __m128* lvfBrakeInput, const __m128* lvfSteeringInput, const __m128* lvbSteeringUsingWheel, HandbrakeComponent& lpHandbrake, const class RaceCarPhysicsObject* lpRaceCar, SteeringComponent& lpSteeringComponent, const class SteeringParams& lpSteeringParams, const __m128& lvfAverageSurfaceGripFactor, const __m128& lvfTimeStep, const __m128& lvfInvTimeStep)
 {
     NFSVehicle& nfsVehicle = **(NFSVehicle**)lpRaceCar;
-    int numWheelsOnGround = 0;
-    RevivalDriftComponent::PreUpdate(nfsVehicle, *driftComponent, numWheelsOnGround);
-    RevivalDriftComponent::UpdateStabilizationForces(nfsVehicle, *driftComponent, numWheelsOnGround);
-    RevivalDriftComponent::Update(nfsVehicle, *driftComponent, numWheelsOnGround);
+
+    // FWD biased cars probably shouldn't be getting this stuff applied, so let's just do this
+    if (nfsVehicle.m_raceCar->mVehicleTuning.torqueSplit <= 0.5f)
+    {
+        int numWheelsOnGround = 0;
+        RevivalDriftComponent::PreUpdate(nfsVehicle, *driftComponent, numWheelsOnGround);
+        RevivalDriftComponent::UpdateStabilizationForces(nfsVehicle, *driftComponent, numWheelsOnGround);
+        RevivalDriftComponent::Update(nfsVehicle, *driftComponent, numWheelsOnGround);
+    }
 }
 
 float __fastcall RemapSteeringForDrift_Orig(DriftComponent* driftComp, float steeringInput, float slipAngleDegrees, float maxSteeringAngle, SteeringComponent& lpSteeringComponent)
