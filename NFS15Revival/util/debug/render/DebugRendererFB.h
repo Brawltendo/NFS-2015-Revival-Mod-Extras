@@ -94,8 +94,6 @@ namespace fb
 		DebugGeometryType_Count
 	};
 
-
-
 	class DebugRenderer
 	{
 		typedef void (*DispatchCallback)(void);

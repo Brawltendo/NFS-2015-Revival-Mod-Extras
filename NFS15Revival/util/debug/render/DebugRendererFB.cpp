@@ -73,7 +73,7 @@ void fb::DebugRenderer::Draw()
 
 		for (int i = 0; i < dispatchList.size(); ++i)
 		{
-			// delete the dispatched function if it doesn't specify continuing
+			// run the dispatched function and then remove it from the list if it shouldn't continue
 			if (!dispatchList[i]())
 				dispatchList.erase(dispatchList.begin() + i);
 		}

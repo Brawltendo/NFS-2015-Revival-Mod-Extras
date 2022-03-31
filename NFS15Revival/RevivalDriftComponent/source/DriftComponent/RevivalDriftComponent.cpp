@@ -8,59 +8,13 @@
 #include "util/debug/render/DebugRendererFB.h"
 #include <sstream>
 
-
-static NFSVehicle* s_playerVehicle = nullptr;
-
-void RevivalDriftComponent::PreUpdate_Debug(NFSVehicle& nfsVehicle)
-{
-    // get the player vehicle pointer
-    /*if (s_playerVehicle == nullptr)
-    {
-        uintptr_t game = (uintptr_t)GetModuleHandle(NULL);
-        std::vector<size_t> offsets { 0x0, 0x28 };
-        uintptr_t vehicleAddress = DerefPtr(game + 0x2C431A0, offsets);
-
-        if (vehicleAddress == (uintptr_t)&nfsVehicle)
-            s_playerVehicle = &nfsVehicle;
-    }*/
-}
-
-fb::RaceVehicleJobHandler* fb::RaceVehicleJobHandler::m_instance = (RaceVehicleJobHandler*)0x142C431A0;
-
-void GetPlayerVehiclePtr(NFSVehicle& nfsVehicle)
-{
-    static float showTextTimer = 0.f;
-
-    //std::stringstream str;
-    //str << "NfsVehicle Address:"; str << std::hex; str << fb::RaceVehicleJobHandler::m_instance->m_playerVehicle;
-    //fb::g_debugRender->drawText(-0.8f, 0.f, str.str().c_str(), fb::Color32(255u, 0u, 0u, 255u), 2.5f);
-
-    if (fb::RaceVehicleJobHandler::m_instance->m_vehicles[0] == &nfsVehicle)
-    {
-        if (s_playerVehicle != &nfsVehicle)
-            s_playerVehicle = &nfsVehicle;
-
-        if (showTextTimer <= 0.f)
-            showTextTimer = 3.f;
-
-        if (showTextTimer > 0.f)
-        {
-            uint8_t alpha = showTextTimer / 3.f * 255u;
-            fb::g_debugRender->drawText(-0.8f, 0.f, "Found player vehicle ptr!", fb::Color32(255u, 0u, 0u, alpha), 3.f);
-            showTextTimer = fmaxf(showTextTimer - fb::RaceVehicleJobHandler::m_instance->m_vehicles[0]->m_currentUpdateDt, 0.f);
-        }
-    }
-}
+fb::RaceVehicleJobHandler** fb::RaceVehicleJobHandler::m_instance = (RaceVehicleJobHandler**)0x142C431A0;
 
 #endif
 
 void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& driftComp, int& numWheelsOnGround)
 {
-#ifdef _DEBUG
-    
-#endif // _DEBUG
-    //GetPlayerVehiclePtr(nfsVehicle);
-    DebugLogPrint("Player vehicle ptr: %I64X\n", fb::RaceVehicleJobHandler::m_instance->m_vehicles[0]);
+    //DebugLogPrint("Player vehicle ptr: %I64X\n", (*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0]);
 
     float steering = nfsVehicle.m_raceCarInputState.inputSteering;
     DriftEntryReason oldEntryReason = (DriftEntryReason)driftComp.someEnum;
@@ -104,51 +58,49 @@ void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& dr
                 driftComp.someEnum = DriftEntryReason_GasStab;
             }
             driftComp.currentYawTorque = 0.f;
-
-        #ifdef _DEBUG
-            {
-                static float showTextTimer = 0.f;
-
-                // draw debug only for the player vehicle
-                if (fb::RaceVehicleJobHandler::m_instance->m_vehicles[0] == &nfsVehicle)
-                {
-                    if (showTextTimer <= 0.f)
-                    {
-                        showTextTimer = 3.f;
-                    }
-                         
-                    if (showTextTimer > 0.f)
-                    {
-                        std::stringstream str;
-                        switch (driftComp.someEnum)
-                        {
-                        DriftEntryReason_None:
-                            str << "";
-                            break;
-                        DriftEntryReason_SlipAngle:
-                            str << Stringize(DriftEntryReason_SlipAngle);
-                            break;
-                        DriftEntryReason_Handbraking:
-                            str << Stringize(DriftEntryReason_Handbraking);
-                            break;
-                        DriftEntryReason_Braking:
-                            str << Stringize(DriftEntryReason_Braking);
-                            break;
-                        DriftEntryReason_GasStab:
-                            str << Stringize(DriftEntryReason_GasStab);
-                            break;
-                        }
-                        uint8_t alpha = /*showTextTimer / 3.f * */255u;
-                        fb::g_debugRender->drawText(-0.8f, 0.f, str.str().c_str(), fb::Color32(255u, 0u, 0u, alpha), 1.f);
-                        showTextTimer = fmaxf(showTextTimer - nfsVehicle.m_currentUpdateDt, 0.f);
-                    }
-                }
-            }
-        #endif
-
             DebugLogPrint("Entered drift!\n");
         }
     }
+
+#ifdef _DEBUG
+    static float showTextTimer = 0.f;
+
+    // draw debug only for the player vehicle
+    if ((*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0] == &nfsVehicle)
+    {
+        if (showTextTimer <= 0.f && oldEntryReason != driftComp.someEnum)
+        {
+            showTextTimer = 3.f;
+        }
+
+        //if (showTextTimer > 0.f)
+        {
+            std::stringstream str;
+            switch (driftComp.someEnum)
+            {
+            default:
+            case DriftEntryReason_None:
+                str << "";
+                break;
+            case DriftEntryReason_SlipAngle:
+                str << Stringize(DriftEntryReason_SlipAngle);
+                break;
+            case DriftEntryReason_Handbraking:
+                str << Stringize(DriftEntryReason_Handbraking);
+                break;
+            case DriftEntryReason_Braking:
+                str << Stringize(DriftEntryReason_Braking);
+                break;
+            case DriftEntryReason_GasStab:
+                str << Stringize(DriftEntryReason_GasStab);
+                break;
+            }
+            uint8_t alpha = /*showTextTimer / 3.f * */255u;
+            fb::g_debugRender->drawText(-0.5f, 0.f, str.str().c_str(), fb::Color32(0u, 255u, 0u, alpha), 1.f);
+            //showTextTimer = fmaxf(showTextTimer - nfsVehicle.m_currentUpdateDt, 0.f);
+        }
+    }
+#endif
 
     // update throttle release timer
     if (nfsVehicle.m_raceCarInputState.inputGas <= s_GlobalDriftParams.mThrottleThreshold)
@@ -198,7 +150,7 @@ void RevivalDriftComponent::UpdateAutoSteer(NFSVehicle& nfsVehicle, DriftCompone
 
     #ifdef _DEBUG
         // draw debug forces only for the player vehicle
-        //if (fb::RaceVehicleJobHandler::m_instance->m_vehicles[0] == &nfsVehicle)
+        if ((*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0] == &nfsVehicle)
         {
             vec4 pos(nfsVehicle.m_raceCarInputState.matrix.wAxis);
 
@@ -208,6 +160,10 @@ void RevivalDriftComponent::UpdateAutoSteer(NFSVehicle& nfsVehicle, DriftCompone
             // draw forward force
             vec4 scaledFwdForce(forwardForce / 1000.f + pos);
             fb::g_debugRender->drawLine3d((float*)&pos, (float*)&scaledFwdForce, fb::Color32(0u, 255u, 0u, 255u));
+
+            //std::stringstream str;
+            //str << "Applying stabilization forces!";
+            //fb::g_debugRender->drawText(-0.5f, 0.1f, str.str().c_str(), fb::Color32(0u, 255u, 0u, 255u), 1.f);
         }
     #endif
 
@@ -341,13 +297,13 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
         }
         else if (driftComp.pad_0017 != DriftState_Entering)
         {
-            // start exiting the drift if below the minimum slip angle but are past entering the drift
+            // start exiting the drift if below the minimum slip angle but past entering the drift
             driftComp.pad_0017 = DriftState_Exiting;
             DebugLogPrint("Exiting drift!\n");
         }
         else if (isCountersteering)
         {
-            // if we're countersteering while entering the drift and are below the minimum slip angle, end the drift
+            // if we're countersteering while entering the drift and below the minimum slip angle, end the drift
             driftComp.pad_0017 = DriftState_Out;
             DebugLogPrint("Exited drift!\n");
         }
@@ -380,10 +336,20 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
             SetVehicleYaw(nfsVehicle, angVel.y, newYawSpeed, dT);
         }
 
+    #ifdef _DEBUG
+        // draw debug only for the player vehicle
+        if ((*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0] == &nfsVehicle)
+        {
+            std::stringstream str;
+            str << "Controlled drift active!";
+            fb::g_debugRender->drawText(-0.5f, 0.15f, str.str().c_str(), fb::Color32(0u, 255u, 0u, 255u), 1.f);
+        }
+    #endif
+
         driftComp.counterSteeringInDrift = steering * saDegrees < 0.f;
         // do countersteer yaw
         // having separate yaw accel for countersteering is done for complete control over the entire drift
-        // so here we're just counteracting the accel being applied above to give a better feeling weight to the drift
+        // so here we're just counteracting the accel being applied above to give a better feeling of weight to the drift
         if (driftComp.counterSteeringInDrift)
         {
             float yawSpeed = Dot(angVel, vUp);

@@ -13,7 +13,7 @@ namespace fb
 	struct RaceVehicleJobHandler
 	{
 		// player vehicle is the first element
-		static RaceVehicleJobHandler* m_instance;
+		static RaceVehicleJobHandler** m_instance;
 
 		void** m_physPreUpdateCallback;
 		char pad[0x8];
