@@ -115,7 +115,7 @@ void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& dr
     }
 }
 
-void RevivalDriftComponent::UpdateAutoSteer(NFSVehicle& nfsVehicle, DriftComponent& driftComp, int numWheelsOnGround)
+void RevivalDriftComponent::UpdateStabilizationForces(NFSVehicle& nfsVehicle, DriftComponent& driftComp, int numWheelsOnGround)
 {
     const float LowAngleForAutoDriftSteer  = DegreesToRadians(15.f);
     const float HighAngleForAutoDriftSteer = DegreesToRadians(40.f);
@@ -245,7 +245,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
             float maintainSpeedAmount = s_GlobalDriftParams.mDriftMaintainSpeedAmount * dT * externalForcesScale * saRatio * speedRatio;
             vec4 maintainSpeedForce = linVel + ((vFwd - normalizedVel) * s_GlobalDriftParams.mDriftMaintainSpeedScale + normalizedVel) * maintainSpeedAmount;
             // may or may not add this back at some point
-            // don't really see a use for it with RevivalDriftComponent::UpdateAutoSteer in place though since that's already being used to maintain side and forward speed
+            // don't really see a use for it with RevivalDriftComponent::UpdateStabilizationForces in place though since that's already being used to maintain side and forward speed
             //SetLinearVelocity(nfsVehicle.dynamicPhysEnt, (uint16_t*)&(nfsVehicle.pad_00C8[0]), &maintainSpeedForce.simdValue);
 
             if (driftComp.currentYawTorque != 0.f && !driftComp.counterSteeringInDrift)

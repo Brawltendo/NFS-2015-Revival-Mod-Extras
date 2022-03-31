@@ -21,7 +21,7 @@ void __fastcall UpdateDrift_Orig(DriftComponent* driftComponent, const __m128* l
     NFSVehicle& nfsVehicle = **(NFSVehicle**)lpRaceCar;
     int numWheelsOnGround = 0;
     RevivalDriftComponent::PreUpdate(nfsVehicle, *driftComponent, numWheelsOnGround);
-    RevivalDriftComponent::UpdateAutoSteer(nfsVehicle, *driftComponent, numWheelsOnGround);
+    RevivalDriftComponent::UpdateStabilizationForces(nfsVehicle, *driftComponent, numWheelsOnGround);
     RevivalDriftComponent::Update(nfsVehicle, *driftComponent, numWheelsOnGround);
 }
 

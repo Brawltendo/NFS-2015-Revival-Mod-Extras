@@ -162,12 +162,8 @@ namespace RevivalDriftComponent
 	// Checks for whether a controlled drift can be initiated, and sets up any other values that need to be ready before the main drift functions
 	void PreUpdate(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int& numWheelsOnGround);
 	// Helps control the vehicle's yaw via external forces, both in and out of a controlled drift
-	void UpdateAutoSteer(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int numWheelsOnGround);
+	void UpdateStabilizationForces(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int numWheelsOnGround);
 	void ResetDrift(DriftComponent& driftComp);
 	void Update(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int numWheelsOnGround);
-
-	#ifdef _DEBUG
-	void PreUpdate_Debug(class NFSVehicle& nfsVehicle);
-	#endif
 
 }
