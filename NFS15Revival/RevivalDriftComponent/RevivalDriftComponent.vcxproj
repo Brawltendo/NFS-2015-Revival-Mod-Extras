@@ -200,7 +200,8 @@
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)$(Platform)\$(Configuration)\$(TargetName)$(TargetExt)" "L:\Games\Need for Speed\asi" /s /i /y</Command>
+      <Command>xcopy "$(SolutionDir)$(Platform)\$(Configuration)\$(TargetName)$(TargetExt)" "L:\Games\Need for Speed\asi" /s /i /y
+xcopy "$(SolutionDir)$(Platform)\$(Configuration)\$(TargetName).pdb" "L:\Games\Need for Speed\asi" /s /i /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

@@ -6,15 +6,24 @@
 
 #ifdef _DEBUG
 #include "util/debug/render/DebugRendererFB.h"
-#include <sstream>
 
 fb::RaceVehicleJobHandler** fb::RaceVehicleJobHandler::m_instance = (RaceVehicleJobHandler**)0x142C431A0;
+extern std::stringstream debug_controlledDriftStr;
+extern std::stringstream debug_driftEntryReasonStr;
+extern __m128 debug_carPos;
+extern __m128 debug_sideForceWorldPos;
+extern __m128 debug_fwdForceWorldPos;
 
 #endif
 
 void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& driftComp, int& numWheelsOnGround)
 {
-    //DebugLogPrint("Player vehicle ptr: %I64X\n", (*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0]);
+#ifdef _DEBUG
+    if ((*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0] == &nfsVehicle)
+    {
+        debug_driftEntryReasonStr.str(std::string());
+    }
+#endif
 
     float steering = nfsVehicle.m_raceCarInputState.inputSteering;
     DriftEntryReason oldEntryReason = (DriftEntryReason)driftComp.someEnum;
@@ -75,29 +84,25 @@ void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& dr
 
         //if (showTextTimer > 0.f)
         {
-            std::stringstream str;
             switch (driftComp.someEnum)
             {
-            default:
-            case DriftEntryReason_None:
-                str << "";
-                break;
-            case DriftEntryReason_SlipAngle:
-                str << Stringize(DriftEntryReason_SlipAngle);
-                break;
-            case DriftEntryReason_Handbraking:
-                str << Stringize(DriftEntryReason_Handbraking);
-                break;
-            case DriftEntryReason_Braking:
-                str << Stringize(DriftEntryReason_Braking);
-                break;
-            case DriftEntryReason_GasStab:
-                str << Stringize(DriftEntryReason_GasStab);
-                break;
+                default:
+                case DriftEntryReason_None:
+                    debug_driftEntryReasonStr.clear();
+                    break;
+                case DriftEntryReason_SlipAngle:
+                    debug_driftEntryReasonStr << Stringize(DriftEntryReason_SlipAngle);
+                    break;
+                case DriftEntryReason_Handbraking:
+                    debug_driftEntryReasonStr << Stringize(DriftEntryReason_Handbraking);
+                    break;
+                case DriftEntryReason_Braking:
+                    debug_driftEntryReasonStr << Stringize(DriftEntryReason_Braking);
+                    break;
+                case DriftEntryReason_GasStab:
+                    debug_driftEntryReasonStr << Stringize(DriftEntryReason_GasStab);
+                    break;
             }
-            uint8_t alpha = /*showTextTimer / 3.f * */255u;
-            fb::g_debugRender->drawText(-0.5f, 0.f, str.str().c_str(), fb::Color32(0u, 255u, 0u, alpha), 1.f);
-            //showTextTimer = fmaxf(showTextTimer - nfsVehicle.m_currentUpdateDt, 0.f);
         }
     }
 #endif
@@ -121,6 +126,16 @@ void RevivalDriftComponent::UpdateStabilizationForces(NFSVehicle& nfsVehicle, Dr
     const float HighAngleForAutoDriftSteer = DegreesToRadians(40.f);
     const float MaxAutoSteerAngle = DegreesToRadians(90.f);
     const float MinSpeedForAutoDriftSteer = MphToMps(30.f);
+
+#ifdef _DEBUG
+    // draw debug forces only for the player vehicle
+    if ((*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0] == &nfsVehicle)
+    {
+        debug_carPos = vec4::s_Zero.simdValue;
+        debug_sideForceWorldPos = vec4::s_Zero.simdValue;
+        debug_fwdForceWorldPos = vec4::s_Zero.simdValue;
+    }
+#endif
 
     // car must be grounded (3+ wheels on the ground) in order to have these forces applied
     if (numWheelsOnGround >= 3 && (nfsVehicle.m_sideSlipAngle <= MaxAutoSteerAngle && nfsVehicle.m_sideSlipAngle >= -MaxAutoSteerAngle) && nfsVehicle.m_forwardSpeed >= MinSpeedForAutoDriftSteer)
@@ -153,13 +168,10 @@ void RevivalDriftComponent::UpdateStabilizationForces(NFSVehicle& nfsVehicle, Dr
         if ((*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0] == &nfsVehicle)
         {
             vec4 pos(nfsVehicle.m_raceCarInputState.matrix.wAxis);
+            debug_carPos = pos.simdValue;
 
-            // draw side force
-            vec4 scaledSideForce(sideForce / 1000.f + pos);
-            fb::g_debugRender->drawLine3d((float*)&pos, (float*)&scaledSideForce, fb::Color32(255u, 0u, 0u, 255u));
-            // draw forward force
-            vec4 scaledFwdForce(forwardForce / 1000.f + pos);
-            fb::g_debugRender->drawLine3d((float*)&pos, (float*)&scaledFwdForce, fb::Color32(0u, 255u, 0u, 255u));
+            debug_sideForceWorldPos = (sideForce / 1000.f + pos).simdValue;
+            debug_fwdForceWorldPos = (forwardForce / 1000.f + pos).simdValue;
 
             //std::stringstream str;
             //str << "Applying stabilization forces!";
@@ -186,6 +198,13 @@ void RevivalDriftComponent::ResetDrift(DriftComponent& driftComp)
 
 void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& driftComp, int numWheelsOnGround)
 {
+#ifdef _DEBUG
+    if ((*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0] == &nfsVehicle)
+    {
+        debug_controlledDriftStr.str(std::string());
+    }
+#endif
+
     if (driftComp.pad_0017 != DriftState_Out)
     {
         // start exiting drift when the throttle has been released for long enough
@@ -340,9 +359,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
         // draw debug only for the player vehicle
         if ((*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0] == &nfsVehicle)
         {
-            std::stringstream str;
-            str << "Controlled drift active!";
-            fb::g_debugRender->drawText(-0.5f, 0.15f, str.str().c_str(), fb::Color32(0u, 255u, 0u, 255u), 1.f);
+            debug_controlledDriftStr << "Controlled drift active!";
         }
     #endif
 

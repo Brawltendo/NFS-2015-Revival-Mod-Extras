@@ -12,6 +12,16 @@
 #include "debug/debug.h"
 
 
+#pragma region RevivalDebug
+
+std::stringstream debug_controlledDriftStr;
+std::stringstream debug_driftEntryReasonStr;
+__m128 debug_carPos = vec4::s_Zero.simdValue;
+__m128 debug_sideForceWorldPos = vec4::s_Zero.simdValue;
+__m128 debug_fwdForceWorldPos = vec4::s_Zero.simdValue;
+
+#pragma endregion RevivalDebug
+
 void __fastcall fb__PerfOverlay__drawFcat(void* perfOverlay, struct IRenderContext* renderContext)
 {
 	fb::g_debugRender->Draw();
@@ -25,8 +35,10 @@ void __fastcall fb__PerfOverlay__drawFps(void* perfOverlay)
 void fb::DebugRenderer::Init()
 {
 	fb::g_debugRender = new fb::DebugRenderer();
-	//InjectHook(0x143B6ABF0, fb__PerfOverlay__drawFcat);
-	InjectHook(0x143B6AE10, fb__PerfOverlay__drawFps);
+	debug_controlledDriftStr.str(std::string());
+	debug_driftEntryReasonStr.str(std::string());
+	InjectHook(0x143B6ABF0, fb__PerfOverlay__drawFcat);
+	//InjectHook(0x143B6AE10, fb__PerfOverlay__drawFps);
 }
 
 void* fb::DebugRenderer::GetNativeDebugRender()
@@ -43,12 +55,6 @@ void* fb::DebugRenderer::GetNativeDebugRender()
 	return debugRenderer;
 }
 
-//template<typename T>
-void fb::DebugRenderer::DispatchDraw(std::function<bool()> dispatchFunc)
-{
-	dispatchList.push_back(dispatchFunc);
-}
-
 void fb::DebugRenderer::Draw()
 {
 	void* debugRender = GetNativeDebugRender();
@@ -59,6 +65,7 @@ void fb::DebugRenderer::Draw()
 			time_t t;
 			time(&t);
 			std::stringstream str;
+			// you're supposed to be able to use [[color:]] tags to color parts of the text but that code never gets hit at least from what I was able to check
 			//str << "[[color:Green]]";
 			str << std::put_time(localtime(&t), "%x %X");
 			const char* blazeTitleId = (const char*)0x1421F2558;
@@ -71,11 +78,18 @@ void fb::DebugRenderer::Draw()
 			fb::g_debugRender->drawText(0, 0, str.str().c_str(), fb::Color32(255u, 255u, 255u, 255u), 1.f);
 		}
 
-		for (int i = 0; i < dispatchList.size(); ++i)
+		// do Revival stuff
 		{
-			// run the dispatched function and then remove it from the list if it shouldn't continue
-			if (!dispatchList[i]())
-				dispatchList.erase(dispatchList.begin() + i);
+			fb::g_debugRender->drawText(-0.5f, 0.15f, debug_controlledDriftStr.str().c_str(), fb::Color32(0u, 255u, 0u, 255u), 1.f);
+
+			uint8_t alpha = /*showTextTimer / 3.f * */255u;
+			fb::g_debugRender->drawText(-0.5f, 0.f, debug_driftEntryReasonStr.str().c_str(), fb::Color32(0u, 255u, 0u, alpha), 1.f);
+			//showTextTimer = fmaxf(showTextTimer - nfsVehicle.m_currentUpdateDt, 0.f);
+
+			// draw side force
+			fb::g_debugRender->drawLine3d(debug_carPos.m128_f32, debug_sideForceWorldPos.m128_f32, fb::Color32(255u, 0u, 0u, 255u));
+			// draw forward force
+			fb::g_debugRender->drawLine3d(debug_carPos.m128_f32, debug_fwdForceWorldPos.m128_f32, fb::Color32(0u, 255u, 0u, 255u));
 		}
 	}
 }

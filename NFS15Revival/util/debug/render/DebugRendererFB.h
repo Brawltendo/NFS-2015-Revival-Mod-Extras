@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <vector>
 #include "math/vectormath.h"
-#include <functional>
+#include <sstream>
 
 
 // Native function offsets
@@ -14,6 +14,17 @@
 #define DebugRenderer_drawLineRect2d 0x143419440
 #define DebugRenderer_drawText_0 0x1434196C0
 #define DebugRenderer_drawText_1 0x143419820
+
+#pragma region RevivalDebug
+
+extern std::stringstream debug_controlledDriftStr;
+extern std::stringstream debug_driftEntryReasonStr;
+extern __m128 debug_carPos;
+extern __m128 debug_sideForceWorldPos;
+extern __m128 debug_fwdForceWorldPos;
+
+#pragma endregion RevivalDebug
+
 
 namespace fb
 {
@@ -96,18 +107,13 @@ namespace fb
 
 	class DebugRenderer
 	{
-		typedef void (*DispatchCallback)(void);
-
 	public:
+
 		// Initializes the debug renderer with a hook
 		static void Init();
 
 		// Retrieves the native debug renderer from the thread context
 		void* GetNativeDebugRender();
-
-		// Sends a function to Draw() to be called
-		//template<typename T>
-		void DispatchDraw(std::function<bool()> dispatchFunc);
 
 		// Draws all debug data to the screen every frame
 		void Draw();
@@ -138,8 +144,6 @@ namespace fb
 		// Draws formatted text to the screen
 		void drawText(int x, int y, Color32 color, const char* format, ...);
 
-	private:
-		std::vector<std::function<bool()>> dispatchList;
 	};
 
 	static DebugRenderer* g_debugRender;
