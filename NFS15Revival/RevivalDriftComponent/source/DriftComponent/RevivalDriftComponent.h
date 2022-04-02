@@ -165,5 +165,7 @@ namespace RevivalDriftComponent
 	void UpdateStabilizationForces(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int numWheelsOnGround);
 	void ResetDrift(DriftComponent& driftComp);
 	void Update(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int numWheelsOnGround);
+	// Maintains some of the car's speed when steering hard around corners
+	void UpdateHardSteering(class NFSVehicle& nfsVehicle);
 
 }

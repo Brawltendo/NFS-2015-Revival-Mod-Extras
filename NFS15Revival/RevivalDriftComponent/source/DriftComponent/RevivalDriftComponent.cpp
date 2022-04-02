@@ -388,3 +388,33 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
             RevivalDriftComponent::ResetDrift(driftComp);
     }
 }
+
+void RevivalDriftComponent::UpdateHardSteering(NFSVehicle& nfsVehicle)
+{
+    // car needs to be grounded and not drifting
+    if (nfsVehicle.m_lastVehicleState == NFSVehicleState_OnGround && nfsVehicle.m_vehicleState == NFSVehicleState_OnGround && nfsVehicle.m_driftComponent->someEnum == DriftEntryReason_None)
+    {
+        const float HardSteeringSpeedThreshold = MphToMps(90.f);
+        const float HardSteeringThreshold = 0.5f;
+
+        // get how much the car is steering relative to the current max steering
+        float steering = fabsf(nfsVehicle.m_raceCarOutputState.wheelSteeringAngleRadians) / fabsf(nfsVehicle.m_raceCarOutputState.steeringRangeLeft);
+        if (steering >= HardSteeringThreshold && fabsf(nfsVehicle.m_forwardSpeed) >= HardSteeringSpeedThreshold
+            && nfsVehicle.m_raceCarInputState.inputGas > 0.1f && nfsVehicle.m_raceCarInputState.inputBrake < 0.1f && !nfsVehicle.m_wasHandbrakeOnLastUpdate)
+        {
+            Matrix44 matrix;
+            RaceRigidBody_GetTransform(nfsVehicle.m_rigidBodyInterface, &matrix);
+            vec4& linVel = SimdToVec4(nfsVehicle.m_linearVelocity);
+            vec4& vFwd = SimdToVec4(matrix.zAxis);
+
+            float speedDelta = nfsVehicle.m_prevFrameSpeed - nfsVehicle.m_speed;
+            if (speedDelta > 0.f)
+            {
+                const float maintainSpeedScale = nfsVehicle.m_performanceModificationComponent->GetModifiedValue(ATM_GasLetOffYawTorque, 1.f);
+                vec4 force = vFwd * (speedDelta * maintainSpeedScale * nfsVehicle.m_originalMass);
+                vec4 timestep(nfsVehicle.m_currentUpdateDt);
+                AddWorldCOMForceLogged(nfsVehicle.m_rigidBodyInterface, &force.simdValue, &timestep.simdValue);
+            }
+        }
+    }
+}

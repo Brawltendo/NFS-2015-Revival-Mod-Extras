@@ -28,6 +28,8 @@ void __fastcall UpdateDrift_Orig(DriftComponent* driftComponent, const __m128* l
         RevivalDriftComponent::UpdateStabilizationForces(nfsVehicle, *driftComponent, numWheelsOnGround);
         RevivalDriftComponent::Update(nfsVehicle, *driftComponent, numWheelsOnGround);
     }
+
+    RevivalDriftComponent::UpdateHardSteering(nfsVehicle);
 }
 
 float __fastcall RemapSteeringForDrift_Orig(DriftComponent* driftComp, float steeringInput, float slipAngleDegrees, float maxSteeringAngle, SteeringComponent& lpSteeringComponent)
