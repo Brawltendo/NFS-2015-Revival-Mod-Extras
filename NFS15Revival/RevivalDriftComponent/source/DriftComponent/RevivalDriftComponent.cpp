@@ -33,7 +33,7 @@ void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& dr
         bool isBraking = s_GlobalDriftParams.mCanEnterDriftWithBrake && nfsVehicle.m_raceCarInputState.inputBrake > s_GlobalDriftParams.mBrakeThreshold;
         bool isHandbraking = s_GlobalDriftParams.mCanEnterDriftWithHandbrake && nfsVehicle.m_wasHandbrakeOnLastUpdate;
         bool isGasStab = false;
-        if (s_GlobalDriftParams.mCanEnterDriftWithGasStab && nfsVehicle.m_raceCarInputState.inputGas > s_GlobalDriftParams.mThrottleThreshold)
+        if (s_GlobalDriftParams.mCanEnterDriftWithGasStab && nfsVehicle.m_input->m_throttle > s_GlobalDriftParams.mThrottleThreshold)
             isGasStab = driftComp.mvfPreviousGasInput.m128_f32[0] > s_GlobalDriftParams.mMinTimeForGasStab && driftComp.mvfPreviousGasInput.m128_f32[0] < s_GlobalDriftParams.mMaxTimeForGasStab;
 
         // use drift config fields for compatibility with performance mod system
@@ -108,7 +108,9 @@ void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& dr
 #endif
 
     // update throttle release timer
-    if (nfsVehicle.m_raceCarInputState.inputGas <= s_GlobalDriftParams.mThrottleThreshold)
+    // we need to use the raw throttle value from VehicleInput because any other throttle input value in NFSVehicle is set to zero when changing gears
+    // this obviously makes for a bad experience when drift entry via gas stab is enabled so let's not have that
+    if (nfsVehicle.m_input->m_throttle <= s_GlobalDriftParams.mThrottleThreshold)
         driftComp.mvfPreviousGasInput.m128_f32[0] += nfsVehicle.m_currentUpdateDt;
     else
         driftComp.mvfPreviousGasInput.m128_f32[0] = 0.f;
@@ -138,50 +140,66 @@ void RevivalDriftComponent::UpdateStabilizationForces(NFSVehicle& nfsVehicle, Dr
 #endif
 
     // car must be grounded (3+ wheels on the ground) in order to have these forces applied
-    if (numWheelsOnGround >= 3 && (nfsVehicle.m_sideSlipAngle <= MaxAutoSteerAngle && nfsVehicle.m_sideSlipAngle >= -MaxAutoSteerAngle) && nfsVehicle.m_forwardSpeed >= MinSpeedForAutoDriftSteer)
+    if (numWheelsOnGround >= 3)
     {
         Matrix44 matrix;
         RaceRigidBody_GetTransform(driftComp.mpChassisRigidBody, &matrix);
-        vec4& linVel = SimdToVec4(nfsVehicle.m_linearVelocity);
-        vec4& vRight = SimdToVec4(matrix.xAxis);
-        vec4& vFwd   = SimdToVec4(matrix.zAxis);
-
-        float angleRatio = (fabsf(nfsVehicle.m_sideSlipAngle) - LowAngleForAutoDriftSteer) / (HighAngleForAutoDriftSteer - LowAngleForAutoDriftSteer);
-        float dpSideVel  = Dot(linVel, vRight);
-        // use drift config fields for compatibility with performance mod system
-        const float sideForceScale    = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_DefaultSteering, driftComp.mpParams->driftScaleParams->Default_steering);
-        const float extForceMagnitude = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_SideForceMagnitude, driftComp.mpParams->driftScaleParams->Side_force_magnitude);
-        const float forwardForceScale = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_CounterSteeringRemapping, driftComp.mpParams->driftScaleParams->Counter_steering_remapping);
-        // overall force scales with the car's angle
-        float force = fminf(fmaxf(angleRatio, 0.f), 1.f) * extForceMagnitude * nfsVehicle.m_originalMass;
-        // scale force by clamped throttle
-        // with zero throttle 10% of the total force will be applied so momentum can still be maintained in corners when the throttle needs to be released
-        force *= fminf(fmaxf(nfsVehicle.m_raceCarInputState.inputGas, 0.1f), 1.f);
-
-        vec4 sideForce(force * sign(dpSideVel) * sideForceScale);
-        sideForce *= vRight;
-        vec4 forwardForce(force * forwardForceScale);
-        forwardForce *= vFwd;
-
-    #ifdef _DEBUG
-        // draw debug forces only for the player vehicle
-        if ((*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0] == &nfsVehicle)
-        {
-            vec4 pos(nfsVehicle.m_raceCarInputState.matrix.wAxis);
-            debug_carPos = pos.simdValue;
-
-            debug_sideForceWorldPos = (sideForce / 1000.f + pos).simdValue;
-            debug_fwdForceWorldPos = (forwardForce / 1000.f + pos).simdValue;
-
-            //std::stringstream str;
-            //str << "Applying stabilization forces!";
-            //fb::g_debugRender->drawText(-0.5f, 0.1f, str.str().c_str(), fb::Color32(0u, 255u, 0u, 255u), 1.f);
-        }
-    #endif
-
-        vec4 autoSteerForce = sideForce + forwardForce;
+        vec4& vUp = SimdToVec4(matrix.yAxis);
+        vec4& vFwd = SimdToVec4(matrix.zAxis);
         vec4 timestep(nfsVehicle.m_currentUpdateDt);
-        AddWorldCOMForceLogged(driftComp.mpChassisRigidBody, &autoSteerForce.simdValue, &timestep.simdValue);
+
+        if ((nfsVehicle.m_sideSlipAngle <= MaxAutoSteerAngle && nfsVehicle.m_sideSlipAngle >= -MaxAutoSteerAngle) && nfsVehicle.m_forwardSpeed >= MinSpeedForAutoDriftSteer)
+        {
+            vec4& vRight = SimdToVec4(matrix.xAxis);
+            vec4& linVel = SimdToVec4(nfsVehicle.m_linearVelocity);
+            float angleRatio = (fabsf(nfsVehicle.m_sideSlipAngle) - LowAngleForAutoDriftSteer) / (HighAngleForAutoDriftSteer - LowAngleForAutoDriftSteer);
+            float dpSideVel = Dot(linVel, vRight);
+            // use drift config fields for compatibility with performance mod system
+            const float sideForceScale = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_DefaultSteering, driftComp.mpParams->driftScaleParams->Default_steering);
+            const float extForceMagnitude = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_SideForceMagnitude, driftComp.mpParams->driftScaleParams->Side_force_magnitude);
+            const float forwardForceScale = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_CounterSteeringRemapping, driftComp.mpParams->driftScaleParams->Counter_steering_remapping);
+            // overall force scales with the car's angle
+            float force = fminf(fmaxf(angleRatio, 0.f), 1.f) * extForceMagnitude * nfsVehicle.m_originalMass;
+            // scale force by clamped throttle
+            // with zero throttle 10% of the total force will be applied so momentum can still be maintained in corners when the throttle needs to be released
+            force *= fminf(fmaxf(nfsVehicle.m_raceCarInputState.inputGas, 0.1f), 1.f);
+
+            // counter steering side force scale is only active during a controlled drift
+            float countersteerMultiplier = 1.f;
+            if (driftComp.counterSteeringInDrift)
+                countersteerMultiplier += clamp(fabsf(nfsVehicle.m_steeringOutputDirection), 0.f, 0.6f);
+            vec4 sideForce(force * sign(dpSideVel) * sideForceScale * countersteerMultiplier);
+            sideForce *= vRight;
+            vec4 forwardForce(force * forwardForceScale);
+            forwardForce *= vFwd;
+
+        #ifdef _DEBUG
+            // draw debug forces only for the player vehicle
+            if ((*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0] == &nfsVehicle)
+            {
+                vec4 pos(nfsVehicle.m_raceCarInputState.matrix.wAxis);
+                debug_carPos = pos.simdValue;
+
+                debug_sideForceWorldPos = (sideForce / 1000.f + pos).simdValue;
+                debug_fwdForceWorldPos = (forwardForce / 1000.f + pos).simdValue;
+
+                //std::stringstream str;
+                //str << "Applying stabilization forces!";
+                //fb::g_debugRender->drawText(-0.5f, 0.1f, str.str().c_str(), fb::Color32(0u, 255u, 0u, 255u), 1.f);
+            }
+        #endif
+
+            vec4 autoSteerForce = sideForce + forwardForce;
+            AddWorldCOMForceLogged(driftComp.mpChassisRigidBody, &autoSteerForce.simdValue, &timestep.simdValue);
+        }
+
+        // add counter yaw to give some extra weight to the steering
+        vec4 torque(nfsVehicle.m_raceCar->mChassisResult.outputState.torqueAppliedToCar);
+        torque.w = 0.f;
+        float yaw = Dot(torque, vUp);
+        float counterYaw = yaw * driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_AligningTorqueEffectInDrift, nfsVehicle.m_data->Steering->AligningTorqueEffectInDrift) - yaw;
+        torque = vUp.simdValue * counterYaw;
+        AddWorldTorqueLogged(driftComp.mpChassisRigidBody, &torque.simdValue, &timestep.simdValue);
     }
 }
 
@@ -204,6 +222,8 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
         debug_controlledDriftStr.str(std::string());
     }
 #endif
+    float latFrictionRear = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_LateralFrictionScaleRear, nfsVehicle.m_data->Tire->AnalyticalTireDataRear->LateralFrictionScale);
+
 
     if (driftComp.pad_0017 != DriftState_Out)
     {
@@ -311,6 +331,10 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
                 yawSpeedInDrift = clamp(yawSpeedInDrift, -s_GlobalDriftParams.mMaxYawSpeedInDrift, s_GlobalDriftParams.mMaxYawSpeedInDrift);
                 DebugLogPrint("Yaw speed = %g\n", yawSpeedInDrift);
                 SetVehicleYaw(nfsVehicle, angVel.y, yawSpeedInDrift, dT);
+
+                const float FrictionLossForLowSlipAngle  = 0.825f;
+                const float FrictionLossForHighSlipAngle = 0.9f;
+                latFrictionRear *= saRatio * (FrictionLossForHighSlipAngle - FrictionLossForLowSlipAngle) + FrictionLossForLowSlipAngle;
             }
             driftComp.mvfTimeSteerLeft.m128_f32[0] = fminf(driftComp.mvfTimeSteerLeft.m128_f32[0] + dT, s_GlobalDriftParams.mMaxSteeringTime);
         }
@@ -353,6 +377,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
             newYawSpeed += driftComp.mvfMaintainedSpeed.m128_f32[0] * (1.f - saRatio) * externalAngVelScale * yawAccelScaleVsSpeed * driftComp.mvfMaintainedSpeed.m128_f32[1];
             DebugLogPrint("Yaw speed = %g\n", newYawSpeed);
             SetVehicleYaw(nfsVehicle, angVel.y, newYawSpeed, dT);
+            latFrictionRear /= yawAccelScaleVsSpeed;
         }
 
     #ifdef _DEBUG
@@ -386,6 +411,9 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
             driftComp.currentYawTorque = angVel.y;
         else
             RevivalDriftComponent::ResetDrift(driftComp);
+
+        nfsVehicle.m_raceCar->mChassis.mTirePatchStaticState[2].criterionTire.lateralFrictionScale = latFrictionRear;
+        nfsVehicle.m_raceCar->mChassis.mTirePatchStaticState[3].criterionTire.lateralFrictionScale = latFrictionRear;
     }
 }
 
@@ -395,26 +423,32 @@ void RevivalDriftComponent::UpdateHardSteering(NFSVehicle& nfsVehicle)
     if (nfsVehicle.m_lastVehicleState == NFSVehicleState_OnGround && nfsVehicle.m_vehicleState == NFSVehicleState_OnGround && nfsVehicle.m_driftComponent->someEnum == DriftEntryReason_None)
     {
         const float HardSteeringSpeedThreshold = MphToMps(90.f);
-        const float HardSteeringThreshold = 0.5f;
+        const float HardSteeringThreshold = 0.375f;
 
         // get how much the car is steering relative to the current max steering
         float steering = fabsf(nfsVehicle.m_raceCarOutputState.wheelSteeringAngleRadians) / fabsf(nfsVehicle.m_raceCarOutputState.steeringRangeLeft);
+        bool isHandbraking = nfsVehicle.m_input->m_handBrake > 0.f;
         if (steering >= HardSteeringThreshold && fabsf(nfsVehicle.m_forwardSpeed) >= HardSteeringSpeedThreshold
-            && nfsVehicle.m_raceCarInputState.inputGas > 0.1f && nfsVehicle.m_raceCarInputState.inputBrake < 0.1f && !nfsVehicle.m_wasHandbrakeOnLastUpdate)
+            && nfsVehicle.m_input->m_throttle > 0.1f && nfsVehicle.m_input->m_brake < 0.1f && !isHandbraking)
         {
             Matrix44 matrix;
             RaceRigidBody_GetTransform(nfsVehicle.m_rigidBodyInterface, &matrix);
-            vec4& linVel = SimdToVec4(nfsVehicle.m_linearVelocity);
             vec4& vFwd = SimdToVec4(matrix.zAxis);
-
-            float speedDelta = nfsVehicle.m_prevFrameSpeed - nfsVehicle.m_speed;
-            if (speedDelta > 0.f)
+            vec4 lastUpdateForce(nfsVehicle.m_driftComponent->mvfSideForceMagnitude);
+            vec4 thisUpdateForce(nfsVehicle.m_raceCarOutputState.forceAppliedToCar);
+            thisUpdateForce.w = 0.f;
+            vec4 forceDelta(lastUpdateForce - thisUpdateForce);
+            float fwdForceDelta = Dot(forceDelta, vFwd);
+            if (fwdForceDelta > 0.f)
             {
                 const float maintainSpeedScale = nfsVehicle.m_performanceModificationComponent->GetModifiedValue(ATM_GasLetOffYawTorque, 1.f);
-                vec4 force = vFwd * (speedDelta * maintainSpeedScale * nfsVehicle.m_originalMass);
+                vec4 force(vFwd * fwdForceDelta * maintainSpeedScale);
                 vec4 timestep(nfsVehicle.m_currentUpdateDt);
                 AddWorldCOMForceLogged(nfsVehicle.m_rigidBodyInterface, &force.simdValue, &timestep.simdValue);
             }
         }
     }
+
+    nfsVehicle.m_driftComponent->mvfSideForceMagnitude = nfsVehicle.m_raceCarOutputState.forceAppliedToCar;
+    nfsVehicle.m_driftComponent->mvfSideForceMagnitude.m128_f32[3] = 0.f;
 }

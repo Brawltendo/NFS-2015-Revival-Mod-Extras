@@ -72,6 +72,39 @@ inline void PatchDampPitchYawRoll()
     
 }
 
+inline void PatchDampLinearVelocityXYZ()
+{
+
+    // set 1.0f to 0.0f
+    {
+        uint8_t patch[] = { 0x00, 0x00, 0x00, 0x00 };
+        PatchInstruction(0x144171075, patch, sizeof(patch));
+        PatchInstruction(0x144171081, patch, sizeof(patch));
+        PatchInstruction(0x14417108D, patch, sizeof(patch));
+    }
+
+    // patch subps to addps
+    {
+        uint8_t patch[] = { 0x58 };
+        PatchInstruction(0x1441710C4, patch, sizeof(patch));
+    }
+
+    // nop movss after each powf call
+    {
+        uint8_t patch[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+        PatchInstruction(0x1441710D6, patch, sizeof(patch));
+        PatchInstruction(0x1441710EA, patch, sizeof(patch));
+        PatchInstruction(0x14417110A, patch, sizeof(patch));
+    }
+
+    // patch mulps to addps
+    {
+        uint8_t patch[] = { 0x58 };
+        PatchInstruction(0x144171226, patch, sizeof(patch));
+    }
+
+}
+
 #pragma endregion PATCH_FUNCTIONS_REGION
 
 DWORD WINAPI Start(LPVOID lpParam)
@@ -97,6 +130,7 @@ DWORD WINAPI Start(LPVOID lpParam)
     DebugLogPrint("gameContext: %I64X\n", gameContext);
 
     PatchDampPitchYawRoll();
+    PatchDampLinearVelocityXYZ();
     InjectHook(0x144197250, UpdateDrift_Orig);
     InjectHook(0x1441967A0, RemapSteeringForDrift_Orig);
 

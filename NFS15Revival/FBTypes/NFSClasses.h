@@ -536,13 +536,19 @@ static_assert(sizeof(OutputState) == 0x380, "OutputState error");
 class VehicleInput
 {
 public:
-	VehicleInputData* inputData; //0x0000
-	Vector2 steeringInput; //0x0008
-	float unk; //0x00010
-	char pad_0014[16]; //0x0014
-	Vector2 throttleInput; //0x0024
-	Vector2 brakeInput; //0x002C
-	float handbrakeInput; //0x0034
+	VehicleInputData* m_data; //0x0000
+	float m_yaw; //0x0008
+	float m_oldYaw; //0x000C
+	float m_pitch; //0x00010
+	float m_oldPitch; //0x00014
+	float m_strafe; //0x00018
+	float m_roll; //0x0001C
+	float m_oldRoll; //0x00020
+	float m_throttle; //0x00024
+	float m_oldThrottle; //0x0028
+	float m_brake; //0x002C
+	float m_oldBrake; //0x0030
+	float m_handBrake; //0x0034
 	char pad_0038[80]; //0x0038
 }; //Size: 0x0088
 
@@ -1118,11 +1124,13 @@ public:
 	bool isABSOn[4]; //0x01E0
 	char pad_01E4[4]; //0x01E4
 }; //Size: 0x01E8
+static_assert(offsetof(ChassisOutputState, world_wheelTirePatchPosition) == 0xd0, "error");
 
-class ChassisResult : public ChassisOutputState
+class ChassisResult
 {
 public:
-	char pad_01E8[8]; //0x01E8
+	ChassisOutputState outputState; //0x0000
+	//char pad_01E8[8]; //0x01E8
 	__m128 tireGroundNormal[4]; //0x01F0
 	__m128 driveshaftTorqueOnCarBody; //0x0230
 	float tireLateralForce[4]; //0x0240
@@ -1153,6 +1161,7 @@ public:
 	bool staticResetConditionMet; //0x03E8
 	char pad_03E9[7]; //0x03E9
 }; //Size: 0x03F0
+static_assert(offsetof(ChassisResult, tireForces) == 0x260, "error");
 
 class SteeringResultState
 {
@@ -1477,3 +1486,4 @@ public:
 	class ChassisFeedbackState mChassisFeedback; //0x4F60
 	char pad_51A8[32]; //0x51A8
 }; //Size: 0x51C8
+static_assert(offsetof(RaceCar, mChassisResult.outputState.world_wheelTirePatchPosition) == 0x3A30, "error");

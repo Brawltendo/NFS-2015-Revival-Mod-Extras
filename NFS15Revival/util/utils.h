@@ -59,7 +59,6 @@ namespace
 	typedef float(__fastcall* _PointGraph8__Evaluate)(int pgCount, float(*pgInX)[8], float(*pgInY)[8], float xVal);
 	typedef void(__fastcall* _AddWorldCOMForceLogged)(RaceRigidBody* rigidBody, __m128* force, __m128* lfTimeStep);
 	typedef void(__fastcall* _AddWorldTorqueLogged)(RaceRigidBody* rigidBody, __m128* torque, __m128* lvfTimeStep);
-	typedef void(__fastcall* _DampPitchYawRoll)(RaceRigidBody* chassis, __m128* pitchDampening, __m128* yawDampening, __m128* rollDampening, __m128* lfTimeStep);
 	typedef void(__fastcall* _MaintainDriftSpeed)(DriftComponent* driftComp, __m128* lvfGasInput, __m128* lvfBrakeInput, __m128* lDirection, class RaceCarPhysicsObject* lpRaceCar, __m128* lvfTimeStep);
 	typedef void(__fastcall* _UpdateDriftScale)(DriftComponent* driftComp, __m128* lvfGasInput, __m128* lvfBrakeInput, __m128* lvfSteeringInputIn, HandbrakeComponent* lpHandbrake, class RaceCarPhysicsObject* lpRaceCar, __m128* lvfTimeStep, __m128* lvfInvTimeStep);
 	typedef void(__fastcall* _UpdateDriftAngleDegrees)(DriftComponent* const driftComp);
@@ -71,7 +70,12 @@ namespace
 	_PointGraph8__Evaluate PointGraph8__Evaluate = (_PointGraph8__Evaluate)0x143F6A8E0;
 	_AddWorldCOMForceLogged AddWorldCOMForceLogged = (_AddWorldCOMForceLogged)0x144170EE0;
 	_AddWorldTorqueLogged AddWorldTorqueLogged = (_AddWorldTorqueLogged)0x144170F50;
+
+	typedef void(__fastcall* _DampPitchYawRoll)(RaceRigidBody* chassis, __m128* pitchDampening, __m128* yawDampening, __m128* rollDampening, __m128* lvfTimeStep);
 	_DampPitchYawRoll DampPitchYawRoll = (_DampPitchYawRoll)0x1441712D0;
+
+	typedef void(__fastcall* _DampLinearVelocityXYZ)(RaceRigidBody* chassis, __m128* xAxisDampening, __m128* yAxisDampening, __m128* zAxisDampening, __m128* lvfTimeStep);
+	_DampLinearVelocityXYZ DampLinearVelocityXYZ = (_DampLinearVelocityXYZ)0x144170FF0;
 
 	typedef Matrix44* (__fastcall* _GetTransform)(RaceRigidBody* chassis, Matrix44* transformIn);
 	// Returns Frostbite transformation matrix: Side vector = X, up vector = Y, forward vector = Z, location = W
@@ -113,6 +117,16 @@ namespace
 		vec4 timestep(dT);
 		__m128* zero = (__m128*)&vec4::s_Zero.simdValue;
 		DampPitchYawRoll(nfsVehicle.m_rigidBodyInterface, zero, &newYaw.simdValue, zero, &timestep.simdValue);
+	}
+
+	inline void SetVehicleLinearVel(NFSVehicle& nfsVehicle, vec4& originalLinVel, vec4& targetLinVel, float dT)
+	{
+		vec4 newLv(targetLinVel - originalLinVel);
+		vec4 timestep(dT);
+		vec4 x = newLv.x;
+		vec4 y = newLv.y;
+		vec4 z = newLv.z;
+		DampLinearVelocityXYZ(nfsVehicle.m_rigidBodyInterface, &x.simdValue, &y.simdValue, &z.simdValue, &timestep.simdValue);
 	}
 
 }

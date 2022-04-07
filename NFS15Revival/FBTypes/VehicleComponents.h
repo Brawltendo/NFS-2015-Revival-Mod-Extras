@@ -52,15 +52,15 @@ public:
 	__m128 mvfMaintainedSpeed;
 
 	// 0x0070
-	// index 0: yaw damping
-	// index 1: exit damping factor
-	// index 2: side force damping scale
+	// index 0: yaw control
 	__m128 mvfDriftYawDamping;
 	// 0x0080
-	// index 0: drift value 
 	__m128 mvfDriftScale;
 	__m128 mvfTimeDrifting; //0x0090
-	__m128 mvfSideForceMagnitude; //0x00A0
+
+	// 0x00A0
+	// force from last update
+	__m128 mvfSideForceMagnitude;
 	__m128 mvfPropSpeedMaintainAlongZ; //0x00B0
 	__m128 mvfPropSpeedMaintainAlongVel; //0x00C0
 	__m128 mvfLatDriftForceFactor; //0x00D0

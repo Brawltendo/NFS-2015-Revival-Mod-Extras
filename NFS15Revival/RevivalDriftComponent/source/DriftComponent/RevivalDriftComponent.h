@@ -150,9 +150,9 @@ static const DriftParameters s_GlobalDriftParams =
 	/* mMinTimeForGasStab	         */  0.1f,
 	/* mMaxTimeForGasStab	         */  0.5f,
 	/* mOffGasTimeForExitingDrift    */  0.55f,
-	/* mCanEnterDriftWithBrake	     */  false,
-	/* mCanEnterDriftWithGasStab     */  false,
-	/* mCanEnterDriftWithSlipAngle   */  false,
+	/* mCanEnterDriftWithBrake	     */  true,
+	/* mCanEnterDriftWithGasStab     */  true,
+	/* mCanEnterDriftWithSlipAngle   */  true,
 	/* mCanEnterDriftWithHandbrake   */  true,
 };
 
