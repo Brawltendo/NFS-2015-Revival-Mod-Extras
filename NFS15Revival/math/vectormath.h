@@ -276,6 +276,12 @@ float Dot(vec4& a, vec4& b)
 	return _mm_cvtss_f32(dot.simdValue);
 }
 
+// Returns the absolute value of the input vector
+vec4 VecAbs(vec4& v)
+{
+	return _mm_and_ps(v.simdValue, _mm_castsi128_ps(_mm_set_epi32(0, 0, 0, ~(1 << 31))));
+}
+
 // Returns the magnitude of the input vector
 float VecLength(vec4& v)
 {

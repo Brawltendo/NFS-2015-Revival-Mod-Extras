@@ -30,16 +30,27 @@ void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& dr
 
     if (driftComp.pad_0017 == DriftState_Out && fabsf(steering) > s_GlobalDriftParams.mSteeringThreshold)
     {
-        bool isBraking = s_GlobalDriftParams.mCanEnterDriftWithBrake && nfsVehicle.m_raceCarInputState.inputBrake > s_GlobalDriftParams.mBrakeThreshold;
-        bool isHandbraking = s_GlobalDriftParams.mCanEnterDriftWithHandbrake && nfsVehicle.m_wasHandbrakeOnLastUpdate;
+        // assist level is determined by slider in the handling tuning menu
+        // full assists are enabled by default globally
+        const float assistSliderVal = nfsVehicle.m_performanceModificationComponent->m_modifiers[ATM_TorqueSplitInDrift].modifier;
+        int assistLevel;
+        if (assistSliderVal <= 0.1f)
+            assistLevel = DriftAssistLevel_Minimal;
+        else if (assistSliderVal > 0.1f && assistSliderVal < 0.9f)
+            assistLevel = DriftAssistLevel_Balanced;
+        else
+            assistLevel = DriftAssistLevel_Full;
+
+        bool isBraking = assistLevel == DriftAssistLevel_Full && nfsVehicle.m_raceCarInputState.inputBrake > s_GlobalDriftParams.mBrakeThreshold;
+        bool isHandbraking = (assistLevel == DriftAssistLevel_Full || assistLevel == DriftAssistLevel_Balanced) && nfsVehicle.m_wasHandbrakeOnLastUpdate;
         bool isGasStab = false;
-        if (s_GlobalDriftParams.mCanEnterDriftWithGasStab && nfsVehicle.m_input->m_throttle > s_GlobalDriftParams.mThrottleThreshold)
+        if (assistLevel == DriftAssistLevel_Full && nfsVehicle.m_input->m_throttle > s_GlobalDriftParams.mThrottleThreshold)
             isGasStab = driftComp.mvfPreviousGasInput.m128_f32[0] > s_GlobalDriftParams.mMinTimeForGasStab && driftComp.mvfPreviousGasInput.m128_f32[0] < s_GlobalDriftParams.mMaxTimeForGasStab;
 
         // use drift config fields for compatibility with performance mod system
         const float angleToEnterDrift = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_MinimumAngleForDrift, driftComp.mpParams->driftScaleParams->Slip_angle_to_enter_drift);
         const float slipAngle = nfsVehicle.m_sideSlipAngle * 180.f * 0.31830987f;
-        bool isSlipping = s_GlobalDriftParams.mCanEnterDriftWithSlipAngle && fabsf(slipAngle) >= angleToEnterDrift;
+        bool isSlipping = fabsf(slipAngle) >= angleToEnterDrift;
 
         // check if any of the initial controlled drift conditions have been met
         if (isHandbraking || isBraking || isSlipping || isGasStab)
@@ -198,7 +209,16 @@ void RevivalDriftComponent::UpdateStabilizationForces(NFSVehicle& nfsVehicle, Dr
         torque.w = 0.f;
         float yaw = Dot(torque, vUp);
         float counterYaw = yaw * driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_AligningTorqueEffectInDrift, nfsVehicle.m_data->Steering->AligningTorqueEffectInDrift) - yaw;
+        /*bool countersteering = nfsVehicle.m_raceCarInputState.inputSteering * -nfsVehicle.m_sideSlipAmount < 0.f;
+        if (fabsf(nfsVehicle.m_sideSlipAmount) > 0.4f && nfsVehicle.m_forwardSpeed >= MinSpeedForAutoDriftSteer && countersteering)
+        {
+            const float minScale = nfsVehicle.m_data->Drift->Drift_scale_from_handbrake;
+            const float maxScale = nfsVehicle.m_data->Drift->Drift_scale_decay;
+            float yawVsSlip = counterYaw * map(fabsf(nfsVehicle.m_sideSlipAmount), 0.4f, 1.f, minScale, maxScale);
+            counterYaw = -yawVsSlip;
+        }*/
         torque = vUp.simdValue * counterYaw;
+        
         AddWorldTorqueLogged(driftComp.mpChassisRigidBody, &torque.simdValue, &timestep.simdValue);
     }
 }
@@ -422,8 +442,8 @@ void RevivalDriftComponent::UpdateHardSteering(NFSVehicle& nfsVehicle)
     // car needs to be grounded and not drifting
     if (nfsVehicle.m_lastVehicleState == NFSVehicleState_OnGround && nfsVehicle.m_vehicleState == NFSVehicleState_OnGround && nfsVehicle.m_driftComponent->someEnum == DriftEntryReason_None)
     {
-        const float HardSteeringSpeedThreshold = MphToMps(90.f);
-        const float HardSteeringThreshold = 0.375f;
+        const float HardSteeringSpeedThreshold = MphToMps(85.f);
+        const float HardSteeringThreshold = 0.175f;
 
         // get how much the car is steering relative to the current max steering
         float steering = fabsf(nfsVehicle.m_raceCarOutputState.wheelSteeringAngleRadians) / fabsf(nfsVehicle.m_raceCarOutputState.steeringRangeLeft);
@@ -437,11 +457,10 @@ void RevivalDriftComponent::UpdateHardSteering(NFSVehicle& nfsVehicle)
             vec4 lastUpdateForce(nfsVehicle.m_driftComponent->mvfSideForceMagnitude);
             vec4 thisUpdateForce(nfsVehicle.m_raceCarOutputState.forceAppliedToCar);
             thisUpdateForce.w = 0.f;
-            vec4 forceDelta(lastUpdateForce - thisUpdateForce);
-            float fwdForceDelta = Dot(forceDelta, vFwd);
+            float fwdForceDelta = fabsf(Dot(lastUpdateForce, vFwd)) - fabsf(Dot(thisUpdateForce, vFwd));
             if (fwdForceDelta > 0.f)
             {
-                const float maintainSpeedScale = nfsVehicle.m_performanceModificationComponent->GetModifiedValue(ATM_GasLetOffYawTorque, 1.f);
+                const float maintainSpeedScale = nfsVehicle.m_performanceModificationComponent->GetModifiedValue(ATM_GasLetOffYawTorque, nfsVehicle.m_data->Drift->Steering_amount_on_exit_drift);
                 vec4 force(vFwd * fwdForceDelta * maintainSpeedScale);
                 vec4 timestep(nfsVehicle.m_currentUpdateDt);
                 AddWorldCOMForceLogged(nfsVehicle.m_rigidBodyInterface, &force.simdValue, &timestep.simdValue);

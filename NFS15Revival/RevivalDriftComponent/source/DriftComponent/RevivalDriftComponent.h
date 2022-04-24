@@ -42,6 +42,13 @@ enum DriftEntryReason
 	DriftEntryReason_GasStab
 };
 
+enum DriftAssistLevel
+{
+	DriftAssistLevel_Minimal,
+	DriftAssistLevel_Balanced,
+	DriftAssistLevel_Full
+};
+
 struct DriftParameters
 {
 	// The yaw scale, while countersteering, when the time spent steering in one direction is zero seconds

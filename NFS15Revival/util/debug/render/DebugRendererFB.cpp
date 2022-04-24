@@ -69,7 +69,7 @@ void fb::DebugRenderer::Draw()
 			//str << "[[color:Green]]";
 			str << std::put_time(localtime(&t), "%x %X");
 			const char* blazeTitleId = (const char*)0x1421F2558;
-			str << " Blz:Test:"; str << blazeTitleId; str << " Build:revival-v4_a1"; str << "\nDebugRenderAddress:"; str << std::hex; str << debugRender;
+			str << " Br:revival-v4-test1"; str << " Blz:Test:"; str << blazeTitleId; str << "\nDebugRenderAddress:"; str << std::hex; str << debugRender;
 
 			//int arr[2] = { 0 };
 			//fb::g_debugRender->getDebugFontSize(debugRender, arr);
