@@ -38,103 +38,97 @@ float __fastcall RemapSteeringForDrift_Orig(DriftComponent* driftComp, float ste
     return steeringInput;
 }
 
-float __fastcall ComputeAckerman(CoreChassis* chassis, float steeringInput, Matrix44& matrix, float wheelBase, float trackWidth, float toeAngle, vec4& steerR, vec4& steerL)
+void __fastcall ComputeAckerman(CoreChassis* chassis, float steering, Matrix44& bodyMatrix, float wheelBase, float trackWidth, float frontToe, vec4& left, vec4& right, float& angleLeft, float& angleRight)
 {
     bool goingRight = false;
-    float steeringAngle = steeringInput;
-    // clamp steering angle <= 180 degrees
-    if (steeringInput > 3.1415927f)
-        steeringAngle -= 6.2831855f;
+    float steer_inside = steering;
+    // invert steering angle if past 180 degrees
+    if (steering > DegreesToRadians(180.f))
+        steer_inside -= DegreesToRadians(360.f);
 
     // negative steering angle indicates a right turn
-    if (steeringAngle < 0.f)
-    {
+    if (steer_inside < 0.f)
         goingRight = true;
-        steeringAngle = -steeringAngle;
-    }
 
     // Ackermann steering geometry causes the outside wheel to have a smaller turning angle than the inside wheel
     // this is determined by the distance of the wheel to the center of the rear axle
-    // this equation is a modified version of 1/tan(L/(R+T/2)), where L is the wheelbase, R is the steering radius, and T is the track width
-    vec4 steerLeft;
-    vec4 steerRight;
-    float steerOutside = (steeringAngle * wheelBase) / (steeringAngle * trackWidth + wheelBase);
-    if (goingRight)
+    // to get the outside wheel's angle we'll use the equation (A*L)/(A*T+L), where L is the wheelbase, A is the steering angle, and T is the front track width 
+    if (steer_inside >= 0.f) // positive steering angle indicates a left turn
     {
-        steerLeft = -steerOutside;
-        steerRight = -steeringAngle;
+        angleLeft  = (steer_inside * wheelBase) / (steer_inside * trackWidth + wheelBase);
+        angleRight = steer_inside;
     }
     else
     {
-        steerLeft = steeringAngle;
-        steerRight = steerOutside;
+        angleLeft  = steer_inside;
+        angleRight = -((-steer_inside * wheelBase) / (-steer_inside * trackWidth + wheelBase));
     }
+    vec4 steerL(angleLeft);
+    vec4 steerR(angleRight);
 
-    steerL = _mm_shuffle_ps(
-                        _mm_shuffle_ps(VecSin(steerLeft).simdValue, vec4::s_Zero.simdValue, 16),
-                        VecCos(steerLeft).simdValue,
+    right = _mm_shuffle_ps(
+                        _mm_shuffle_ps(VecSin(steerR).simdValue, vec4::s_Zero.simdValue, 16),
+                        VecCos(steerR).simdValue,
                         40);
-    steerL = _mm_add_ps(
+    right = _mm_add_ps(
         _mm_add_ps(
-            _mm_mul_ps(VecSwizzleMask(steerL.simdValue, 0), matrix.xAxis),
-            _mm_mul_ps(matrix.yAxis, VecSwizzleMask(steerL.simdValue, 85))),
-        _mm_mul_ps(matrix.zAxis, VecSwizzleMask(steerL.simdValue, 170)));
+            _mm_mul_ps(VecSwizzleMask(right.simdValue, 0), bodyMatrix.xAxis),
+            _mm_mul_ps(bodyMatrix.yAxis, VecSwizzleMask(right.simdValue, 85))),
+        _mm_mul_ps(bodyMatrix.zAxis, VecSwizzleMask(right.simdValue, 170)));
 
-    steerR = _mm_shuffle_ps(
-                        _mm_shuffle_ps(VecSin(steerRight).simdValue, vec4::s_Zero.simdValue, 16),
-                        VecCos(steerRight).simdValue,
+    left = _mm_shuffle_ps(
+                        _mm_shuffle_ps(VecSin(steerL).simdValue, vec4::s_Zero.simdValue, 16),
+                        VecCos(steerL).simdValue,
                         40);
-    steerR = _mm_add_ps(
+    left = _mm_add_ps(
         _mm_add_ps(
-            _mm_mul_ps(VecSwizzleMask(steerR.simdValue, 0), matrix.xAxis),
-            _mm_mul_ps(matrix.yAxis, VecSwizzleMask(steerR.simdValue, 85))),
-        _mm_mul_ps(matrix.zAxis, VecSwizzleMask(steerR.simdValue, 170)));
-
-    return steeringAngle;
+            _mm_mul_ps(VecSwizzleMask(left.simdValue, 0), bodyMatrix.xAxis),
+            _mm_mul_ps(bodyMatrix.yAxis, VecSwizzleMask(left.simdValue, 85))),
+        _mm_mul_ps(bodyMatrix.zAxis, VecSwizzleMask(left.simdValue, 170)));
 }
 
-void __fastcall DoSteering(CoreChassis* chassis, ChassisStaticState* staticState, ChassisDynamicState* state, ChassisResult* result, vec4& steerL, vec4& steerR)
-{
-    void(__fastcall* computeAckerman)(void*, float, Matrix44&, float, float, float, vec4&, vec4&) = reinterpret_cast<void(__fastcall*)(void*, float, Matrix44&, float, float, float, vec4&, vec4&)>(0x1441B2F20);
-
-    float steeringInput;
-    if (state->isAIControlled)
-    {
-        float steer_input = state->steer_input;
-        steeringInput = -0.78539819;
-        if (steer_input >= -0.78539819)
-        {
-            steeringInput = steer_input;
-            if (steer_input >= 0.78539819)
-                steeringInput = 0.78539819;
-        }
-    }
-    else
-    {
-        steeringInput = state->steering_value;
-    }
-    float speedMph = staticState->toe.Front.min_x;
-    float absSpeed = fabsf(state->speed);
-    if (speedMph <= (absSpeed * 2.2369399f))
-        speedMph = absSpeed * 2.2369399f;
-    if (staticState->toe.Front.max_x <= speedMph)
-        speedMph = staticState->toe.Front.max_x;
-    float frontToe = staticState->toe.Front.Evaluate(speedMph);
-    float toeAngle = staticState->toe.Front.min_y;
-    if (toeAngle <= frontToe)
-        toeAngle = frontToe;
-    if (staticState->toe.Front.max_y <= toeAngle)
-        toeAngle = staticState->toe.Front.max_y;
-    ComputeAckerman(
-        chassis,
-        steeringInput,
-        state->matrix,
-        staticState->wheelBase,
-        staticState->trackWidth[0],
-        toeAngle * 0.017453,
-        steerR,
-        steerL);
-}
+//void __fastcall DoSteering(CoreChassis* chassis, ChassisStaticState* staticState, ChassisDynamicState* state, ChassisResult* result, vec4& steerL, vec4& steerR)
+//{
+//    void(__fastcall* computeAckerman)(void*, float, Matrix44&, float, float, float, vec4&, vec4&) = reinterpret_cast<void(__fastcall*)(void*, float, Matrix44&, float, float, float, vec4&, vec4&)>(0x1441B2F20);
+//
+//    float steeringInput;
+//    if (state->isAIControlled)
+//    {
+//        float steer_input = state->steer_input;
+//        steeringInput = -0.78539819;
+//        if (steer_input >= -0.78539819)
+//        {
+//            steeringInput = steer_input;
+//            if (steer_input >= 0.78539819)
+//                steeringInput = 0.78539819;
+//        }
+//    }
+//    else
+//    {
+//        steeringInput = state->steering_value;
+//    }
+//    float speedMph = staticState->toe.Front.min_x;
+//    float absSpeed = fabsf(state->speed);
+//    if (speedMph <= (absSpeed * 2.2369399f))
+//        speedMph = absSpeed * 2.2369399f;
+//    if (staticState->toe.Front.max_x <= speedMph)
+//        speedMph = staticState->toe.Front.max_x;
+//    float frontToe = staticState->toe.Front.Evaluate(speedMph);
+//    float toeAngle = staticState->toe.Front.min_y;
+//    if (toeAngle <= frontToe)
+//        toeAngle = frontToe;
+//    if (staticState->toe.Front.max_y <= toeAngle)
+//        toeAngle = staticState->toe.Front.max_y;
+//    ComputeAckerman(
+//        chassis,
+//        steeringInput,
+//        state->matrix,
+//        staticState->wheelBase,
+//        staticState->trackWidth[0],
+//        toeAngle * 0.017453,
+//        steerR,
+//        steerL);
+//}
 
 inline void PatchDampPitchYawRoll()
 {

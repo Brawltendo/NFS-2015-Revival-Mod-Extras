@@ -318,7 +318,7 @@ vec4 VecCos(vec4& in)
 
 	vec4 x = VecAbs(v2) - vec4(0.25f);
 	vec4 x2 = x * x;
-	vec4 accum = x * 6.2831855f;
+	vec4 accum = x * vec4(6.2831855f);
 	x *= x2;
 	accum += x * vec4(-41.341702f);
 	x *= x2;
