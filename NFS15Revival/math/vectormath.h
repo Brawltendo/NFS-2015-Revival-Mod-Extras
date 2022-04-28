@@ -279,7 +279,8 @@ float Dot(vec4& a, vec4& b)
 // Returns the absolute value of the input vector
 vec4 VecAbs(vec4& v)
 {
-	return _mm_and_ps(v.simdValue, _mm_castsi128_ps(_mm_set_epi32(0, 0, 0, ~(1 << 31))));
+	return _mm_max_ps(v.simdValue * _mm_set1_ps(-1.f), v.simdValue);
+	//return _mm_and_ps(v.simdValue, _mm_castsi128_ps(_mm_set_epi32(0, 0, 0, ~(1 << 31))));
 }
 
 // Returns the magnitude of the input vector
@@ -308,4 +309,42 @@ vec4 Cross(vec4 const& a, vec4 const& b)
 	return tmp3 - tmp4;
 }
 
-};
+// Calculates the Taylor series cosine of the input vector
+vec4 VecCos(vec4& in)
+{
+	vec4 v1 = VecAbs(in) * vec4(-0.15915494f);
+	const vec4 constVal(1.2582912e7f);
+	vec4 v2 = (((v1 - constVal) + constVal) - v1) - vec4(0.5f);
+
+	vec4 x = VecAbs(v2) - vec4(0.25f);
+	vec4 x2 = x * x;
+	vec4 accum = x * 6.2831855f;
+	x *= x2;
+	accum += x * vec4(-41.341702f);
+	x *= x2;
+	accum += x * vec4(81.605247f);
+	x *= x2;
+	accum += x * vec4(-76.705856f);
+	x *= x2;
+	accum += x * vec4(42.058693f);
+	x *= x2;
+	accum += x * vec4(-15.094643f);
+	x *= x2;
+	accum += x * vec4(3.8199525f);
+	x *= x2;
+	accum += x * vec4(-0.7181223f);
+	x *= x2;
+	accum += x * vec4(0.10422916f);
+	x *= x2;
+	accum += x * vec4(-0.012031586f);
+	return _mm_max_ps(vec4(-1.f).simdValue, _mm_min_ps(vec4(1.f).simdValue, accum.simdValue));
+}
+
+// Calculates the Taylor series sine of the input vector
+vec4 VecSin(vec4& in)
+{
+	vec4 v = in - vec4(1.5707964f);
+	return VecCos(v);
+}
+
+}

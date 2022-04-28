@@ -14,8 +14,8 @@ float map(float s, float a1, float a2, float b1, float b2);
 float clamp(float x, float min, float max);
 // Clamps the input x within the bounds [0.0f, 1.0f]
 float clamp01(float x);
-class PointGraph8 initPointGraph8(__m128 curveData[10]);
-float EvaluatePointGraph8(class PointGraph8* pgIn, float xVal);
+PointGraph8 initPointGraph8(__m128 curveData[10]);
+float EvaluatePointGraph8(PointGraph8* pgIn, float xVal);
 float sign(float in, float scale);
 float sign(float in);
 float GetSpeedMph(class NFSVehicle* nfsVehicle);

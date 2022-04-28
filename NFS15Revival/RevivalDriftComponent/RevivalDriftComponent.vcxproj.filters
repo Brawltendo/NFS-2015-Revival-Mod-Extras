@@ -70,6 +70,18 @@
     <Filter Include="minhook\src\hde">
       <UniqueIdentifier>{369c4987-28b1-44f4-a209-ec79e7732504}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\FBTypes\VehiclePhysics">
+      <UniqueIdentifier>{003e68be-c4d9-483c-a982-e1e06749f5df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\VehiclePhysics\Core">
+      <UniqueIdentifier>{53c5916f-7442-4f10-bc7f-a26dc28ca18a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\VehiclePhysics">
+      <UniqueIdentifier>{f5a2b912-6388-4d74-8c9c-4de067eab555}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\VehiclePhysics\Core">
+      <UniqueIdentifier>{eed765ef-3697-4134-a59c-d83608d2f68a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -140,6 +152,12 @@
     </ClCompile>
     <ClCompile Include="..\util\memoryutils.cpp">
       <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FBTypes\VehiclePhysics\Core\Curve.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FBTypes\VehiclePhysics\Core\Curve.cpp">
+      <Filter>Source Files\FBTypes\VehiclePhysics\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -238,6 +256,9 @@
     </ClInclude>
     <ClInclude Include="..\util\memoryutils.h">
       <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FBTypes\VehiclePhysics\Core\Curve.hpp">
+      <Filter>Header Files\FBTypes\VehiclePhysics\Core</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

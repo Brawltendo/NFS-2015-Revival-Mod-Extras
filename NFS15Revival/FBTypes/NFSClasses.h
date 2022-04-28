@@ -1,22 +1,13 @@
 #pragma once
 #include <vector>
 #include "VehicleComponents.h"
+#include "VehiclePhysics/Core/Curve.hpp"
 
-class PointGraph8
+class AxlePairPointGraph8
 {
 public:
-	float min_x; //0x0000
-	float min_y; //0x0004
-	float max_x; //0x0008
-	float max_y; //0x000C
-	float x[8]; //0x0010
-	float y[8]; //0x0030
-}; //Size: 0x0050
-
-class AxlePairPointGraph8 : public PointGraph8
-{
-public:
-	class PointGraph8 Rear; //0x0050
+	PointGraph8 Front; //0x0000
+	PointGraph8 Rear; //0x0050
 }; //Size: 0x00A0
 
 class LinearTransform
@@ -48,6 +39,21 @@ struct Matrix44
 		};
 		float m[4][4];
 		__m128 mVec[4];
+	};
+};
+
+struct Matrix33
+{
+	union
+	{
+		struct
+		{
+			__m128 xAxis;
+			__m128 yAxis;
+			__m128 zAxis;
+		};
+		//float m[4][4];
+		__m128 mVec[3];
 	};
 };
 
@@ -802,8 +808,8 @@ public:
 	float m_lastInputSteering; //0x1080
 	class ForceFeedbackData m_ffbData; //0x1084
 	uint32_t m_flags; //0x10A8
-	class PointGraph8 m_angularDampeningAtAngle; //0x10AC
-	class PointGraph8 m_angularDampeningAtSpeed; //0x10FC
+	PointGraph8 m_angularDampeningAtAngle; //0x10AC
+	PointGraph8 m_angularDampeningAtSpeed; //0x10FC
 	char pad_114C[4]; //0x114C
 	class PerformanceModificationComponent* m_performanceModificationComponent; //0x1150
 	char pad_1158[16]; //0x1158
@@ -845,15 +851,15 @@ public:
 class SteeringStaticState : public PointGraph8
 {
 public:
-	class PointGraph8 steerWheelMaxVsSpeedMulti; //0x0050
-	class PointGraph8 steerWheelMaxVsSlipAngle; //0x00A0
-	class PointGraph8 GentleInputSteerRate; //0x00F0
-	class PointGraph8 SteerRate; //0x0140
-	class PointGraph8 CounterSteerRate; //0x0190
-	class PointGraph8 CenterSteerRate; //0x01E0
-	class PointGraph8 SteeringRangeOffThrottle; //0x0230
-	class PointGraph8 SteeringRangeOnThrottle; //0x0280
-	class PointGraph8 SteeringRangeInReverse; //0x02D0
+	PointGraph8 steerWheelMaxVsSpeedMulti; //0x0050
+	PointGraph8 steerWheelMaxVsSlipAngle; //0x00A0
+	PointGraph8 GentleInputSteerRate; //0x00F0
+	PointGraph8 SteerRate; //0x0140
+	PointGraph8 CounterSteerRate; //0x0190
+	PointGraph8 CenterSteerRate; //0x01E0
+	PointGraph8 SteeringRangeOffThrottle; //0x0230
+	PointGraph8 SteeringRangeOnThrottle; //0x0280
+	PointGraph8 SteeringRangeInReverse; //0x02D0
 	float ReverseSteerRate; //0x0320
 	float ReverseCounterSteerRate; //0x0324
 	float ReverseCenterSteerRate; //0x0328
@@ -893,17 +899,17 @@ public:
 	bool ABSSlipRatioSystemEnabled; //0x0008
 	char pad_0009[3]; //0x0009
 	float ABSSlipRatioSystemTargetSR; //0x000C
-	class PointGraph8 ABSTorqueRatioScalarVsSpeed; //0x0010
-	class PointGraph8 steerFFBVsSlipAngle; //0x0060
-	class PointGraph8 steerFFBVsSpeed; //0x00B0
+	PointGraph8 ABSTorqueRatioScalarVsSpeed; //0x0010
+	PointGraph8 steerFFBVsSlipAngle; //0x0060
+	PointGraph8 steerFFBVsSpeed; //0x00B0
 }; //Size: 0x0100
 
 class AerodynamicsStaticState
 {
 public:
 	__m128 carBodyDimension; //0x0000
-	class PointGraph8 aeroCoefficientScalarVsSlipAngle; //0x0010
-	class PointGraph8 aeroCoefficientSlipScalarVsSpeed; //0x0060
+	PointGraph8 aeroCoefficientScalarVsSlipAngle; //0x0010
+	PointGraph8 aeroCoefficientSlipScalarVsSpeed; //0x0060
 	float liftHeightRatio; //0x00B0
 	float bodyRideHeightNoDownforce; //0x00B4
 	float aeroCoefficientMaxGroundEffect; //0x00B8
@@ -983,9 +989,9 @@ public:
 class ThrottleAIStaticState : public CommonVehicleState
 {
 public:
-	class PointGraph8 throttleMappingFirstGear; //0x0004
-	class PointGraph8 throttleMappingSecondGear; //0x0054
-	class PointGraph8 throttleMappingThirdAndAbove; //0x00A4
+	PointGraph8 throttleMappingFirstGear; //0x0004
+	PointGraph8 throttleMappingSecondGear; //0x0054
+	PointGraph8 throttleMappingThirdAndAbove; //0x00A4
 	float timeThrottlingAfterDownShift; //0x00F4
 	float amountThrottlingAfterDownShift; //0x00F8
 	float minSpeedForThrottlingAfterDownShift; //0x00FC
@@ -1002,11 +1008,11 @@ public:
 	float flyWheelMass; //0x0014
 	float frontWheelRadius; //0x0018
 	float rearWheelRadius; //0x001C
-	class PointGraph8 torqueCurve; //0x0020
-	class PointGraph8 torqueFrictionCurve; //0x0070
+	PointGraph8 torqueCurve; //0x0020
+	PointGraph8 torqueFrictionCurve; //0x0070
 	float unloadedEngineFriction; //0x00C0
 	float revLimiterTime; //0x00C4
-	class PointGraph8 engineBrakingVsGear; //0x00C8
+	PointGraph8 engineBrakingVsGear; //0x00C8
 	float gearRatioValues[10]; //0x0118
 	uint32_t numberOfGearRatiosValues; //0x0140
 	float gearEfficiencyValues[10]; //0x0144
@@ -1021,13 +1027,13 @@ public:
 	float speedLimiterNos; //0x018C
 	float reverseSpeedLimiter; //0x0190
 	float reverseTorqueMultiplier; //0x0194
-	class PointGraph8 tractionControlScalarVsSpeed; //0x0198
-	class PointGraph8 tractionControlScalarVsSlipAngle; //0x01E8
+	PointGraph8 tractionControlScalarVsSpeed; //0x0198
+	PointGraph8 tractionControlScalarVsSlipAngle; //0x01E8
 	float engineLoadLerp; //0x0238
 	float minLoadAtTopSpeed; //0x023C
 	float fullLoadTorqueNoise; //0x0240
 	float zeroLoadTorqueNoise; //0x0244
-	class PointGraph8 torqueNoise; //0x0248
+	PointGraph8 torqueNoise; //0x0248
 }; //Size: 0x0298
 
 class ForcedInductionStaticState : public CommonVehicleState
@@ -1224,13 +1230,13 @@ public:
 class StabilityManagementStaticState : public PointGraph8
 {
 public:
-	class PointGraph8 ESCOverSteerDecMinAcc; //0x0050
-	class PointGraph8 ESCUnderSteerMinAcc; //0x00A0
-	class PointGraph8 ESCOverSteerFrontBrake; //0x00F0
-	class PointGraph8 ESCOverSteerRearBrake; //0x0140
-	class PointGraph8 ESCUnderSteerFrontBrake; //0x0190
-	class PointGraph8 ESCUnderSteerRearBrake; //0x01E0
-	class PointGraph8 ESCUnderSteerTorque; //0x0230
+	PointGraph8 ESCOverSteerDecMinAcc; //0x0050
+	PointGraph8 ESCUnderSteerMinAcc; //0x00A0
+	PointGraph8 ESCOverSteerFrontBrake; //0x00F0
+	PointGraph8 ESCOverSteerRearBrake; //0x0140
+	PointGraph8 ESCUnderSteerFrontBrake; //0x0190
+	PointGraph8 ESCUnderSteerRearBrake; //0x01E0
+	PointGraph8 ESCUnderSteerTorque; //0x0230
 }; //Size: 0x0280
 
 class ChassisStaticState
@@ -1250,7 +1256,7 @@ public:
 	float shock_digression[2]; //0x04D8
 	float shockBlowout; //0x04E0
 	class AxlePairPointGraph8 brakeSpec; //0x04E4
-	class PointGraph8 eBrakeSpec; //0x0584
+	PointGraph8 eBrakeSpec; //0x0584
 	float brakeScalarWhenSteering[2]; //0x05D4
 	float brakeScalarDeadZone; //0x05DC
 	float differentialFactor[3]; //0x05E0
@@ -1258,8 +1264,8 @@ public:
 	float nitrousDragCoefficient; //0x05F0
 	float aeroTopSpeed; //0x05F4
 	float aeroNitrousTopSpeed; //0x05F8
-	class PointGraph8 aeroCG; //0x05FC
-	class PointGraph8 aeroCoefficient; //0x064C
+	PointGraph8 aeroCG; //0x05FC
+	PointGraph8 aeroCoefficient; //0x064C
 	float groundEffectHeightRatio; //0x069C
 	float liftHeightRatio; //0x06A0
 	float aeroCoefficientMaxGroundEffect; //0x06A4
@@ -1267,30 +1273,30 @@ public:
 	float aeroCoefficientOffThrottle; //0x06AC
 	float flyingCarAeroCoefficient_BigAir; //0x06B0
 	float flyingCarAeroCoefficient_SmallAir; //0x06B4
-	class PointGraph8 steeringTuning; //0x06B8
+	PointGraph8 steeringTuning; //0x06B8
 	float wheelBase; //0x0708
 	float trackWidth[2]; //0x070C
 	float sectionWidth[2]; //0x0714
 	float frontAxle; //0x071C
-	class PointGraph8 rollCenter; //0x0720
+	PointGraph8 rollCenter; //0x0720
 	class AxlePairPointGraph8 toe; //0x0770
 	class AxlePairPointGraph8 camber; //0x0810
-	class PointGraph8 caster; //0x08B0
+	PointGraph8 caster; //0x08B0
 	float NOSGripIncrease; //0x0900
 	float staticGripOffThrottle; //0x0904
 	float driveshaftTorqueEffect; //0x0908
 	float driveshaftTorqueMax; //0x090C
-	class PointGraph8 frontWeightBias; //0x0910
-	class PointGraph8 gripVsBrake; //0x0960
+	PointGraph8 frontWeightBias; //0x0910
+	PointGraph8 gripVsBrake; //0x0960
 	float gripVsBrakeBlend; //0x09B0
 	float ABSTorqueRatioLowerBound; //0x09B4
 	float ABSTorqueRatioUpperBound; //0x09B8
 	float ABSSlipRatioSystemTargetSR; //0x09BC
 	bool ABSSlipRatioSystemEnabled; //0x09C0
 	char pad_09C1[3]; //0x09C1
-	class PointGraph8 ABSTorqueRatioScalarVsSpeed; //0x09C4
-	class PointGraph8 steerFFBVsSlipAngle; //0x0A14
-	class PointGraph8 steerFFBVsSpeed; //0x0A64
+	PointGraph8 ABSTorqueRatioScalarVsSpeed; //0x09C4
+	PointGraph8 steerFFBVsSlipAngle; //0x0A14
+	PointGraph8 steerFFBVsSpeed; //0x0A64
 	float downForce; //0x0AB4
 	float downForceOffset; //0x0AB8
 	float downForceOffsetUnderBraking; //0x0ABC
@@ -1310,9 +1316,9 @@ public:
 	float flyWheelMass; //0x0014
 	float frontWheelRadius; //0x0018
 	float rearWheelRadius; //0x001C
-	class PointGraph8 torqueCurve; //0x0020
-	class PointGraph8 torqueFrictionCurve; //0x0070
-	class PointGraph8 engineBrakingVsGear; //0x00C0
+	PointGraph8 torqueCurve; //0x0020
+	PointGraph8 torqueFrictionCurve; //0x0070
+	PointGraph8 engineBrakingVsGear; //0x00C0
 	float unloadedEngineFriction; //0x0110
 	float revLimiterTime; //0x0114
 	float gearRatioValues[10]; //0x0118
@@ -1328,8 +1334,8 @@ public:
 	float speedLimiterNos; //0x0188
 	float reverseSpeedLimiter; //0x018C
 	float reverseTorqueMultiplier; //0x0190
-	class PointGraph8 tractionControlScalarVsSpeed; //0x0194
-	class PointGraph8 tractionControlScalarVsSlipAngle; //0x01E4
+	PointGraph8 tractionControlScalarVsSpeed; //0x0194
+	PointGraph8 tractionControlScalarVsSlipAngle; //0x01E4
 	GearID topGear; //0x0234
 	uint32_t numberOfShiftUpRPMValues; //0x0238
 	float shiftUpRPMValues[10]; //0x023C
@@ -1338,11 +1344,11 @@ public:
 	float minTireTractionToShiftUpFirstGear; //0x0290
 	float minTireTractionToShiftUp; //0x0294
 	float shiftDownBrakeDynamicFactor; //0x0298
-	class PointGraph8 UpShiftThrottle; //0x029C
-	class PointGraph8 UpShiftClutch; //0x02EC
-	class PointGraph8 DownShiftThrottle; //0x033C
-	class PointGraph8 DownShiftClutch; //0x038C
-	class PointGraph8 DownShiftSlopeScalar; //0x03DC
+	PointGraph8 UpShiftThrottle; //0x029C
+	PointGraph8 UpShiftClutch; //0x02EC
+	PointGraph8 DownShiftThrottle; //0x033C
+	PointGraph8 DownShiftClutch; //0x038C
+	PointGraph8 DownShiftSlopeScalar; //0x03DC
 	float forcedIndHighBoost; //0x042C
 	float forcedIndLowBoost; //0x0430
 	eInductionType forcedInductionType; //0x0434
@@ -1355,9 +1361,9 @@ public:
 	char pad_044A[2]; //0x044A
 	float forcedIndLagTime; //0x044C
 	float forcedIndSpinDownTime; //0x0450
-	class PointGraph8 throttleMappingFirstGear; //0x0454
-	class PointGraph8 throttleMappingSecondGear; //0x04A4
-	class PointGraph8 throttleMappingThirdAndAbove; //0x04F4
+	PointGraph8 throttleMappingFirstGear; //0x0454
+	PointGraph8 throttleMappingSecondGear; //0x04A4
+	PointGraph8 throttleMappingThirdAndAbove; //0x04F4
 	float timeThrottlingAfterDownShift; //0x0544
 	float amountThrottlingAfterDownShift; //0x0548
 	float minSpeedForThrottlingAfterDownShift; //0x054C
@@ -1365,7 +1371,7 @@ public:
 	float minLoadAtTopSpeed; //0x0554
 	float zeroLoadTorqueNoise; //0x0558
 	float fullLoadTorqueNoise; //0x055C
-	class PointGraph8 torqueNoise; //0x0560
+	PointGraph8 torqueNoise; //0x0560
 }; //Size: 0x05B0
 
 class SteeringOutputState
@@ -1461,6 +1467,86 @@ public:
 	float tireLastSlipAngle[4]; //0x0234
 	float escUnderSteerTimer; //0x0244
 }; //Size: 0x0248
+
+class ChassisDynamicState
+{
+public:
+	ChassisFeedbackState feedbackState;
+	Matrix44 matrix;
+	__m128 local_vel;
+	__m128 linear_vel;
+	__m128 angular_vel;
+	__m128 dimension;
+	__m128 ground_normal;
+	__m128 world_wheelTirePatchPosition[4];
+	__m128 world_wheelVelocity[4];
+	__m128 groundNormalUnderWheel[4];
+	__m128 groundVelocityAtWheel[4];
+	__m128 local_cog;
+	__m128 world_cog;
+	float gas_input;
+	float brake_input;
+	float ebrake_input;
+	float steer_input;
+	float timeFullGasInput;
+	float drafting;
+	float draftingSpeed;
+	float mass;
+	float speed;
+	float forwardSpeed;
+	float dT;
+	bool requestMatchSpeed;
+	float requestMatchSpeed_Speed;
+	float slipangle;
+	int blown_tires;
+	bool onValidWorldFace[4];
+	bool is_modelling;
+	float gravity;
+	bool onMovingGround;
+	float ground_effect;
+	int flags;
+	bool isAIControlled;
+	bool isAnimationControlled;
+	enum SleepState
+	{
+		SS_NONE = 0x0,
+		SS_ALL = 0x1,
+		SS_LATERAL = 0x2,
+	} sleepState;
+	bool requestForceCompression[4];
+	float requestForceCompression_CompressionValue[4];
+	float wheelMountHeightAboveGround[4];
+	float surfaceDriveGrip[4];
+	float longitudinalGripScalar[4];
+	float lateralGripScalar[4];
+	float surfaceRollingResistance[4];
+	float surfaceVelocityDrag[4];
+	float surfaceRugosityAmplitude[4];
+	float surfaceRugosityFrequency[4];
+	float longGripThrottleScalar[4];
+	float longGripBrakeScalar[4];
+	int numberOfWheelsOnGround;
+	float steering_value;
+	GearID gear;
+	bool clutch_engaged;
+	float drive_torque;
+	float torqueSplit;
+	float wheelMaxAngularVelocity[4];
+	float wheelMaxTorqueRatio[4];
+	bool nos_engaged;
+	bool predictBigAir;
+	bool isTumbling;
+	bool isDrifting;
+	bool isABSEnabled;
+	bool isTCSEnabled;
+	float camber[4];
+	float tireRadius[4];
+	float landingStabilityScale;
+	__declspec(align(16)) Matrix33 worldInverseInertiaTensor;
+	float frontTireInertia;
+	float rearTireInertia;
+	float burnoutScale;
+};
 
 class RaceCar : public OutputState
 {

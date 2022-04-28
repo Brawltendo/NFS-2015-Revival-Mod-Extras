@@ -57,6 +57,8 @@ void* fb::DebugRenderer::GetNativeDebugRender()
 
 void fb::DebugRenderer::Draw()
 {
+	static bool isNumAddAlreadyDown = false;
+
 	void* debugRender = GetNativeDebugRender();
 	if (debugRender)
 	{
@@ -69,7 +71,7 @@ void fb::DebugRenderer::Draw()
 			//str << "[[color:Green]]";
 			str << std::put_time(localtime(&t), "%x %X");
 			const char* blazeTitleId = (const char*)0x1421F2558;
-			str << " Br:revival-v4-test1"; str << " Blz:Test:"; str << blazeTitleId; str << "\nDebugRenderAddress:"; str << std::hex; str << debugRender;
+			str << " Br:revival-v4-test1"; str << " Blz:Test:"; str << blazeTitleId; //str << "\nDebugRenderAddress:"; str << std::hex; str << debugRender;
 
 			//int arr[2] = { 0 };
 			//fb::g_debugRender->getDebugFontSize(debugRender, arr);
@@ -90,6 +92,24 @@ void fb::DebugRenderer::Draw()
 			fb::g_debugRender->drawLine3d(debug_carPos.m128_f32, debug_sideForceWorldPos.m128_f32, fb::Color32(255u, 0u, 0u, 255u));
 			// draw forward force
 			fb::g_debugRender->drawLine3d(debug_carPos.m128_f32, debug_fwdForceWorldPos.m128_f32, fb::Color32(0u, 255u, 0u, 255u));
+
+
+			// numpad add
+			/*SHORT keyState = GetKeyState(VK_ADD);
+			bool numAddDown = keyState & 0x8000;
+
+			if (numAddDown && !isNumAddAlreadyDown)
+			{
+				struct ConsoleRegistry
+				{
+					char buf[256];
+				} console{};
+
+				void(__fastcall* executeConsoleCommand)(ConsoleRegistry*, const char*, bool) = reinterpret_cast<void(__fastcall*)(ConsoleRegistry*, const char*, bool)>(0x1433FD330);
+				executeConsoleCommand(&console, "AddCash", true);
+				DebugLogPrint("You got 100k added to your bank.\n");
+			}
+			isNumAddAlreadyDown = numAddDown;*/
 		}
 	}
 }

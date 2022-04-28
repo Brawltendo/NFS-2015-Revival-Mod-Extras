@@ -19,6 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\FBTypes\VehiclePhysics\Core\Curve.cpp" />
+    <ClCompile Include="..\FBTypes\VehiclePhysics\Core\Curve.cpp" />
     <ClCompile Include="..\imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="..\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="..\imgui\imgui.cpp" />
@@ -48,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FBTypes\VehicleComponents.h" />
+    <ClInclude Include="..\FBTypes\VehiclePhysics\Core\Curve.hpp" />
     <ClInclude Include="..\imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="..\imgui\backends\imgui_impl_win32.h" />
     <ClInclude Include="..\imgui\imconfig.h" />
