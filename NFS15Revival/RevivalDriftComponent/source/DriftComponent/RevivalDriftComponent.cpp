@@ -3,6 +3,7 @@
 #include "NFSClasses.h"
 #include "util/memoryutils.h"
 #include <algorithm>
+#include "util/debug/debug.h"
 
 #ifdef _DEBUG
 #include "util/debug/render/DebugRendererFB.h"
@@ -16,8 +17,14 @@ extern __m128 debug_fwdForceWorldPos;
 
 #endif
 
-void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& driftComp, int& numWheelsOnGround)
+void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& driftComp, int& numWheelsOnGround, const DriftParameters& params)
 {
+    for (int i = 0; i < 4; ++i)
+    {
+        if (nfsVehicle.m_grounddata.isgroundValid[i])
+            ++numWheelsOnGround;
+    }
+    
 #ifdef _DEBUG
     if ((*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0] == &nfsVehicle)
     {
@@ -28,7 +35,7 @@ void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& dr
     float steering = nfsVehicle.m_raceCarInputState.inputSteering;
     DriftEntryReason oldEntryReason = (DriftEntryReason)driftComp.someEnum;
 
-    if (driftComp.pad_0017 == DriftState_Out && fabsf(steering) > s_GlobalDriftParams.mSteeringThreshold)
+    if (driftComp.pad_0017 == DriftState_Out && fabsf(steering) > params.mSteeringThreshold)
     {
         // assist level is determined by slider in the handling tuning menu
         // full assists are enabled by default globally
@@ -41,11 +48,11 @@ void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& dr
         else
             assistLevel = DriftAssistLevel_Full;
 
-        bool isBraking = assistLevel == DriftAssistLevel_Full && nfsVehicle.m_raceCarInputState.inputBrake > s_GlobalDriftParams.mBrakeThreshold;
+        bool isBraking = assistLevel == DriftAssistLevel_Full && nfsVehicle.m_raceCarInputState.inputBrake > params.mBrakeThreshold;
         bool isHandbraking = (assistLevel == DriftAssistLevel_Full || assistLevel == DriftAssistLevel_Balanced) && nfsVehicle.m_wasHandbrakeOnLastUpdate;
         bool isGasStab = false;
-        if (assistLevel == DriftAssistLevel_Full && nfsVehicle.m_input->m_throttle > s_GlobalDriftParams.mThrottleThreshold)
-            isGasStab = driftComp.mvfPreviousGasInput.m128_f32[0] > s_GlobalDriftParams.mMinTimeForGasStab && driftComp.mvfPreviousGasInput.m128_f32[0] < s_GlobalDriftParams.mMaxTimeForGasStab;
+        if (assistLevel == DriftAssistLevel_Full && nfsVehicle.m_input->m_throttle > params.mThrottleThreshold)
+            isGasStab = driftComp.mvfPreviousGasInput.m128_f32[0] > params.mMinTimeForGasStab && driftComp.mvfPreviousGasInput.m128_f32[0] < params.mMaxTimeForGasStab;
 
         // use drift config fields for compatibility with performance mod system
         const float angleToEnterDrift = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_MinimumAngleForDrift, driftComp.mpParams->driftScaleParams->Slip_angle_to_enter_drift);
@@ -121,19 +128,13 @@ void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& dr
     // update throttle release timer
     // we need to use the raw throttle value from VehicleInput because any other throttle input value in NFSVehicle is set to zero when changing gears
     // this obviously makes for a bad experience when drift entry via gas stab is enabled so let's not have that
-    if (nfsVehicle.m_input->m_throttle <= s_GlobalDriftParams.mThrottleThreshold)
+    if (nfsVehicle.m_input->m_throttle <= params.mThrottleThreshold)
         driftComp.mvfPreviousGasInput.m128_f32[0] += nfsVehicle.m_currentUpdateDt;
     else
         driftComp.mvfPreviousGasInput.m128_f32[0] = 0.f;
-
-    for (int i = 0; i < 4; ++i)
-    {
-        if (nfsVehicle.m_grounddata.isgroundValid[i])
-            ++numWheelsOnGround;
-    }
 }
 
-void RevivalDriftComponent::UpdateStabilizationForces(NFSVehicle& nfsVehicle, DriftComponent& driftComp, int numWheelsOnGround)
+void RevivalDriftComponent::UpdateStabilizationForces(NFSVehicle& nfsVehicle, DriftComponent& driftComp, int numWheelsOnGround, const DriftParameters& params)
 {
     const float LowAngleForAutoDriftSteer  = DegreesToRadians(15.f);
     const float HighAngleForAutoDriftSteer = DegreesToRadians(40.f);
@@ -234,7 +235,7 @@ void RevivalDriftComponent::ResetDrift(DriftComponent& driftComp)
     driftComp.counterSteeringInDrift = false;
 }
 
-void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& driftComp, int numWheelsOnGround)
+void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& driftComp, int numWheelsOnGround, const DriftParameters& params)
 {
 #ifdef _DEBUG
     if ((*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0] == &nfsVehicle)
@@ -248,7 +249,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
     if (driftComp.pad_0017 != DriftState_Out)
     {
         // start exiting drift when the throttle has been released for long enough
-        if (driftComp.mvfPreviousGasInput.m128_f32[0] > s_GlobalDriftParams.mOffGasTimeForExitingDrift)
+        if (driftComp.mvfPreviousGasInput.m128_f32[0] > params.mOffGasTimeForExitingDrift)
             driftComp.pad_0017 = DriftState_Exiting;
 
         Matrix44 matrix;
@@ -260,7 +261,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
         vec4& vFwd   = SimdToVec4(matrix.zAxis);
         const float speedMps = nfsVehicle.m_forwardSpeed;
         // exit drift completely if any of these conditions are met
-        if (numWheelsOnGround <= 1 || speedMps <= s_GlobalDriftParams.mSpeedToExitDrift || speedMps <= MphToMps(13.f))
+        if (numWheelsOnGround <= 1 || speedMps <= params.mSpeedToExitDrift || speedMps <= MphToMps(13.f))
         {
             driftComp.pad_0017 = DriftState_Out;
             RevivalDriftComponent::ResetDrift(driftComp);
@@ -279,7 +280,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
         const float externalForcesScale = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_DriftScaleFromBraking, driftComp.mpParams->driftScaleParams->Drift_scale_from_braking);
         const float externalAngVelScale = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_DriftScaleFromCounterSteering, driftComp.mpParams->driftScaleParams->Drift_scale_from_counter_steering);
 
-        if (absSlipAngle < s_GlobalDriftParams.mAngleToExitDrift && (driftComp.pad_0017 == DriftState_Exiting || isCountersteering))
+        if (absSlipAngle < params.mAngleToExitDrift && (driftComp.pad_0017 == DriftState_Exiting || isCountersteering))
         {
             driftComp.pad_0017 = DriftState_Out;
             DebugLogPrint("Exited drift!\n");
@@ -296,51 +297,50 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
 
             vec4 fwdVel = linVel - Dot(linVel, vUp);
             float fwdVelMag = VecLength(fwdVel);
-            float saRatio = (absSlipAngle - angleToEnterDrift) / (s_GlobalDriftParams.mAngleForMaxDriftScale - angleToEnterDrift);
+            float saRatio = (absSlipAngle - angleToEnterDrift) / (params.mAngleForMaxDriftScale - angleToEnterDrift);
             saRatio = clamp01(saRatio);
-            float speedRatio = (fwdVelMag - s_GlobalDriftParams.mSpeedForZeroSpeedMaintenance) / (s_GlobalDriftParams.mSpeedForFullSpeedMaintenance - s_GlobalDriftParams.mSpeedForZeroSpeedMaintenance);
+            float speedRatio = (fwdVelMag - params.mSpeedForZeroSpeedMaintenance) / (params.mSpeedForFullSpeedMaintenance - params.mSpeedForZeroSpeedMaintenance);
             speedRatio = clamp01(speedRatio);
             vec4 normalizedVel = fwdVel * (1.f / fwdVelMag);
-            float maintainSpeedAmount = s_GlobalDriftParams.mDriftMaintainSpeedAmount * dT * externalForcesScale * saRatio * speedRatio;
-            vec4 maintainSpeedForce = linVel + ((vFwd - normalizedVel) * s_GlobalDriftParams.mDriftMaintainSpeedScale + normalizedVel) * maintainSpeedAmount;
+            float maintainSpeedAmount = params.mDriftMaintainSpeedAmount * dT * externalForcesScale * saRatio * speedRatio;
+            vec4 maintainSpeedForce = linVel + ((vFwd - normalizedVel) * params.mDriftMaintainSpeedScale + normalizedVel) * maintainSpeedAmount;
             // may or may not add this back at some point
             // don't really see a use for it with RevivalDriftComponent::UpdateStabilizationForces in place though since that's already being used to maintain side and forward speed
             //SetLinearVelocity(nfsVehicle.dynamicPhysEnt, (uint16_t*)&(nfsVehicle.pad_00C8[0]), &maintainSpeedForce.simdValue);
 
             if (driftComp.currentYawTorque != 0.f && !driftComp.counterSteeringInDrift)
             {
-                float steerTimeRatio = driftComp.mvfTimeSteerLeft.m128_f32[0] / s_GlobalDriftParams.mMaxSteeringTime;
+                float steerTimeRatio = driftComp.mvfTimeSteerLeft.m128_f32[0] / params.mMaxSteeringTime;
                 bool countersteeringInDrift = saDegrees * steering <= 0.f;
                 float steeringScaleByTimeMin;
                 float steeringScaleByTimeMax;
                 if (countersteeringInDrift)
                 {
-                    steeringScaleByTimeMin = s_GlobalDriftParams.mCSYawScaleForZeroSteerTime;
-                    steeringScaleByTimeMax = s_GlobalDriftParams.mCSYawScaleForMaxSteerTime;
+                    steeringScaleByTimeMin = params.mCSYawScaleForZeroSteerTime;
+                    steeringScaleByTimeMax = params.mCSYawScaleForMaxSteerTime;
                 }
                 else
                 {
-                    steeringScaleByTimeMin = s_GlobalDriftParams.mYawScaleForZeroSteerTime;
-                    steeringScaleByTimeMax = s_GlobalDriftParams.mYawScaleForMaxSteerTime;
+                    steeringScaleByTimeMin = params.mYawScaleForZeroSteerTime;
+                    steeringScaleByTimeMax = params.mYawScaleForMaxSteerTime;
                 }
 
                 float yawScaleVsSteerTime = steerTimeRatio * (steeringScaleByTimeMax - steeringScaleByTimeMin) + steeringScaleByTimeMin;
-                float steeringYawAccel = steering * (saRatio * s_GlobalDriftParams.mSlipAngleRatioScale + 1.f) * s_GlobalDriftParams.mYawAccelScale * yawScaleVsSteerTime * dT;
+                float steeringYawAccel = steering * (saRatio * params.mSlipAngleRatioScale + 1.f) * params.mYawAccelScale * yawScaleVsSteerTime * dT;
                 float yawSpeedInDrift = driftComp.currentYawTorque + steeringYawAccel;
-                if ((fwdVelMag + maintainSpeedAmount) > s_GlobalDriftParams.mSpeedForMidDriftScale && (sign(driftComp.currentYawTorque) * yawSpeedInDrift) > fabsf(driftComp.currentYawTorque))
+                if ((fwdVelMag + maintainSpeedAmount) > params.mSpeedForMidDriftScale && (sign(driftComp.currentYawTorque) * yawSpeedInDrift) > fabsf(driftComp.currentYawTorque))
                 {
-                    float extraYaw = (absSlipAngle - s_GlobalDriftParams.mAngleForMidDriftScale) / (s_GlobalDriftParams.mAngleForMaxDriftScale - s_GlobalDriftParams.mAngleForMidDriftScale);
+                    float extraYaw = (absSlipAngle - params.mAngleForMidDriftScale) / (params.mAngleForMaxDriftScale - params.mAngleForMidDriftScale);
                     if (extraYaw > 0.f)
                         yawSpeedInDrift -= extraYaw * steeringYawAccel;
                 }
 
                 const float saSign = sign(saDegrees);
-                float yawAccelScale = countersteeringInDrift ? s_GlobalDriftParams.mCountersteerYawAccelScale : 1.f;
+                float yawAccelScale = countersteeringInDrift ? params.mCountersteerYawAccelScale : 1.f;
                 float ninetyDegSlip = bodySlipAngle * -DegreesToRadians(90.f);
-                // adds counter yaw to steer out from a 90 degree slip angle
-                // probably won't use this though so it's not actually used in the yaw calc
-                float autoCsYaw = ((ninetyDegSlip * ninetyDegSlip * saSign * s_GlobalDriftParams.mAutoCSYawScaleForHighSA) + (ninetyDegSlip * s_GlobalDriftParams.mAutoCSYawScaleForLowSA));
-                float autoYawAccel = (saSign * s_GlobalDriftParams.mYawAutoAccelAmount /*+ autoCsYaw*/) * dT * yawAccelScale;
+                // add counter yaw to steer out from a 90 degree slip angle
+                float autoCsYaw = (ninetyDegSlip * ninetyDegSlip * saSign * params.mAutoCSYawScaleForHighSA) + (ninetyDegSlip * params.mAutoCSYawScaleForLowSA);
+                float autoYawAccel = (saSign * params.mYawAutoAccelAmount + autoCsYaw) * dT * yawAccelScale;
                 if (yawSpeedInDrift * (yawSpeedInDrift - autoYawAccel) < 0.f || yawSpeedInDrift * driftComp.currentYawTorque < 0.f)
                     yawSpeedInDrift = 0.f;
                 else
@@ -348,7 +348,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
 
                 yawSpeedInDrift = (yawSpeedInDrift - driftComp.currentYawTorque) * externalAngVelScale + driftComp.currentYawTorque;
                 // clamp to mMaxYawSpeedInDrift
-                yawSpeedInDrift = clamp(yawSpeedInDrift, -s_GlobalDriftParams.mMaxYawSpeedInDrift, s_GlobalDriftParams.mMaxYawSpeedInDrift);
+                yawSpeedInDrift = clamp(yawSpeedInDrift, -params.mMaxYawSpeedInDrift, params.mMaxYawSpeedInDrift);
                 DebugLogPrint("Yaw speed = %g\n", yawSpeedInDrift);
                 SetVehicleYaw(nfsVehicle, angVel.y, yawSpeedInDrift, dT);
 
@@ -356,7 +356,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
                 const float FrictionLossForHighSlipAngle = 0.9f;
                 latFrictionRear *= saRatio * (FrictionLossForHighSlipAngle - FrictionLossForLowSlipAngle) + FrictionLossForLowSlipAngle;
             }
-            driftComp.mvfTimeSteerLeft.m128_f32[0] = fminf(driftComp.mvfTimeSteerLeft.m128_f32[0] + dT, s_GlobalDriftParams.mMaxSteeringTime);
+            driftComp.mvfTimeSteerLeft.m128_f32[0] = fminf(driftComp.mvfTimeSteerLeft.m128_f32[0] + dT, params.mMaxSteeringTime);
         }
         else if (driftComp.pad_0017 != DriftState_Entering)
         {
@@ -374,10 +374,10 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
         {
             // since we still haven't completely entered/exited the drift, we need to get the ratio of the car's current angle to the angle to enter a drift
             const float saRatio = absSlipAngle / angleToEnterDrift;
-            const float yawAccelScaleForHighSpeed = s_GlobalDriftParams.mYawAccelScaleForHighSpeed;
-            const float yawAccelScaleForLowSpeed  = s_GlobalDriftParams.mYawAccelScaleForLowSpeed;
-            const float minSpeedForDrift = s_GlobalDriftParams.mLowSpeedForYawAccelScale;
-            const float maxSpeedForDrift = s_GlobalDriftParams.mHighSpeedForYawAccelScale;
+            const float yawAccelScaleForHighSpeed = params.mYawAccelScaleForHighSpeed;
+            const float yawAccelScaleForLowSpeed  = params.mYawAccelScaleForLowSpeed;
+            const float minSpeedForDrift = params.mLowSpeedForYawAccelScale;
+            const float maxSpeedForDrift = params.mHighSpeedForYawAccelScale;
             float speedRatio = 0.f;
             if (minSpeedForDrift != maxSpeedForDrift)
                 speedRatio = (fabsf(speedMps) - minSpeedForDrift) / (maxSpeedForDrift - minSpeedForDrift);
@@ -417,7 +417,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
             float yawSpeed = Dot(angVel, vUp);
             float newYawSpeed = yawSpeed;
             float saRatio = fminf(absSlipAngle / 65.f, 1.f);
-            newYawSpeed += (s_GlobalDriftParams.mCSYawScaleForZeroSteerTime * s_GlobalDriftParams.mYawAccelScale) * (saRatio * s_GlobalDriftParams.mSlipAngleRatioScale + 1.f) * dT * steering;
+            newYawSpeed += (params.mCSYawScaleForZeroSteerTime * params.mYawAccelScale) * (saRatio * params.mSlipAngleRatioScale + 1.f) * dT * steering;
             // reset yaw speed to zero when the target yaw has the opposite sign of the original yaw
             // this helps to control the tail stepping out too fast the other way when exiting a drift
             if (yawSpeed * newYawSpeed < 0.f)
@@ -446,7 +446,7 @@ void RevivalDriftComponent::UpdateHardSteering(NFSVehicle& nfsVehicle)
         const float HardSteeringThreshold = 0.175f;
 
         // get how much the car is steering relative to the current max steering
-        float steering = fabsf(nfsVehicle.m_raceCarOutputState.wheelSteeringAngleRadians) / fabsf(nfsVehicle.m_raceCarOutputState.steeringRangeLeft);
+        float steering = fabsf(nfsVehicle.m_raceCarOutputState.wheelSteeringAngleRadians) / fabsf(nfsVehicle.m_steeringOutputDirection);
         bool isHandbraking = nfsVehicle.m_input->m_handBrake > 0.f;
         if (steering >= HardSteeringThreshold && fabsf(nfsVehicle.m_forwardSpeed) >= HardSteeringSpeedThreshold
             && nfsVehicle.m_input->m_throttle > 0.1f && nfsVehicle.m_input->m_brake < 0.1f && !isHandbraking)

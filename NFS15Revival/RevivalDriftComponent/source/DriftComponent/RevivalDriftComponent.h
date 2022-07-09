@@ -163,15 +163,55 @@ static const DriftParameters s_GlobalDriftParams =
 	/* mCanEnterDriftWithHandbrake   */  true,
 };
 
+static const DriftParameters s_GlobalDriftParamsFWD =
+{
+	/* mCSYawScaleForZeroSteerTime   */  2.5f,
+	/* mYawScaleForZeroSteerTime     */  0.8f,
+	/* mCSYawScaleForMaxSteerTime    */  3.f,
+	/* mYawScaleForMaxSteerTime	     */  1.f,
+	/* mYawAccelScale                */  1.f,
+	/* mSlipAngleRatioScale          */  1.f,
+	/* mMaxSteeringTime	             */  2.f,
+	/* mYawAutoAccelAmount           */  5.f,
+	/* mAutoCSYawScaleForLowSA       */  -3.f,
+	/* mAutoCSYawScaleForHighSA      */  3.f,
+	/* mCountersteerYawAccelScale    */  3.f,
+	/* mAngleToExitDrift	         */  5.f,
+	/* mAngleToEnterDrift	         */  13.f,
+	/* mAngleForMidDriftScale        */  40.f,
+	/* mAngleForMaxDriftScale        */  50.f,
+	/* mSpeedForMidDriftScale        */  20.f,
+	/* mSpeedToExitDrift	         */  4.f,
+	/* mSpeedForZeroSpeedMaintenance */  0.f,
+	/* mSpeedForFullSpeedMaintenance */  2.3f,
+	/* mMaxYawSpeedInDrift	         */  2.125f,
+	/* mDriftMaintainSpeedAmount     */  9.2f,
+	/* mDriftMaintainSpeedScale	     */  1.f,
+	/* mLowSpeedForYawAccelScale     */  0.f,
+	/* mHighSpeedForYawAccelScale    */  21.4f,
+	/* mYawAccelScaleForLowSpeed     */  1.65f,
+	/* mYawAccelScaleForHighSpeed    */  1.25f,
+	/* mSteeringThreshold	         */  0.3f,
+	/* mBrakeThreshold	             */  0.95f,
+	/* mThrottleThreshold	         */  0.95f,
+	/* mMinTimeForGasStab	         */  0.1f,
+	/* mMaxTimeForGasStab	         */  0.5f,
+	/* mOffGasTimeForExitingDrift    */  0.55f,
+	/* mCanEnterDriftWithBrake	     */  true,
+	/* mCanEnterDriftWithGasStab     */  true,
+	/* mCanEnterDriftWithSlipAngle   */  true,
+	/* mCanEnterDriftWithHandbrake   */  true,
+};
+
 namespace RevivalDriftComponent
 {
 
 	// Checks for whether a controlled drift can be initiated, and sets up any other values that need to be ready before the main drift functions
-	void PreUpdate(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int& numWheelsOnGround);
+	void PreUpdate(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int& numWheelsOnGround, const DriftParameters& params);
 	// Helps control the vehicle's yaw via external forces, both in and out of a controlled drift
-	void UpdateStabilizationForces(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int numWheelsOnGround);
+	void UpdateStabilizationForces(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int numWheelsOnGround, const DriftParameters& params);
 	void ResetDrift(DriftComponent& driftComp);
-	void Update(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int numWheelsOnGround);
+	void Update(class NFSVehicle& nfsVehicle, class DriftComponent& driftComp, int numWheelsOnGround, const DriftParameters& params);
 	// Maintains some of the car's speed when steering hard around corners
 	void UpdateHardSteering(class NFSVehicle& nfsVehicle);
 

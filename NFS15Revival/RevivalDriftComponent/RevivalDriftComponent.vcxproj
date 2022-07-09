@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\FBTypes\VehiclePhysics\Core\Curve.cpp" />
-    <ClCompile Include="..\FBTypes\VehiclePhysics\Core\Curve.cpp" />
     <ClCompile Include="..\imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="..\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="..\imgui\imgui.cpp" />
@@ -215,7 +214,7 @@ xcopy "$(SolutionDir)$(Platform)\$(Configuration)\$(TargetName).pdb" "L:\Games\N
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;NFS15REVIVAL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>L:\NeedForSpeedASIs\NFS-2015-Revival-Mod-Extras\NFS15Revival\source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
@@ -227,6 +226,9 @@ xcopy "$(SolutionDir)$(Platform)\$(Configuration)\$(TargetName).pdb" "L:\Games\N
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(SolutionDir)$(Platform)\$(Configuration)\$(TargetName)$(TargetExt)" "L:\Games\Need for Speed\asi" /s /i /y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

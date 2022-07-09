@@ -11,6 +11,7 @@
 #include "DriftComponent\RevivalDriftComponent.h"
 #include "NFSClasses.h"
 #include <algorithm>
+#include "util/debug/debug.h"
 
 
 
@@ -20,15 +21,12 @@ void __fastcall UpdateDrift_Orig(DriftComponent* driftComponent, const __m128* l
 {
     NFSVehicle& nfsVehicle = **(NFSVehicle**)lpRaceCar;
 
-    // FWD biased cars probably shouldn't be getting this stuff applied, so let's just do this
-    if (nfsVehicle.m_raceCar->mVehicleTuning.torqueSplit <= 0.5f)
-    {
-        int numWheelsOnGround = 0;
-        RevivalDriftComponent::PreUpdate(nfsVehicle, *driftComponent, numWheelsOnGround);
-        RevivalDriftComponent::UpdateStabilizationForces(nfsVehicle, *driftComponent, numWheelsOnGround);
-        RevivalDriftComponent::Update(nfsVehicle, *driftComponent, numWheelsOnGround);
-    }
-
+    int numWheelsOnGround = 0;
+    // use different global params for FWD cars
+    const DriftParameters& params = nfsVehicle.m_raceCar->mVehicleTuning.torqueSplit > 0.5f ? s_GlobalDriftParamsFWD : s_GlobalDriftParams;
+    RevivalDriftComponent::PreUpdate(nfsVehicle, *driftComponent, numWheelsOnGround, params);
+    RevivalDriftComponent::UpdateStabilizationForces(nfsVehicle, *driftComponent, numWheelsOnGround, params);
+    RevivalDriftComponent::Update(nfsVehicle, *driftComponent, numWheelsOnGround, params);
     RevivalDriftComponent::UpdateHardSteering(nfsVehicle);
 }
 
@@ -40,19 +38,14 @@ float __fastcall RemapSteeringForDrift_Orig(DriftComponent* driftComp, float ste
 
 void __fastcall ComputeAckerman(CoreChassis* chassis, float steering, Matrix44& bodyMatrix, float wheelBase, float trackWidth, float frontToe, vec4& left, vec4& right, float& angleLeft, float& angleRight)
 {
-    bool goingRight = false;
     float steer_inside = steering;
     // invert steering angle if past 180 degrees
     if (steering > DegreesToRadians(180.f))
         steer_inside -= DegreesToRadians(360.f);
 
-    // negative steering angle indicates a right turn
-    if (steer_inside < 0.f)
-        goingRight = true;
-
-    // Ackermann steering geometry causes the outside wheel to have a smaller turning angle than the inside wheel
+    // Positive Ackermann steering geometry causes the inside wheel to have a larger turning angle than the outside wheel
     // this is determined by the distance of the wheel to the center of the rear axle
-    // to get the outside wheel's angle we'll use the equation (A*L)/(A*T+L), where L is the wheelbase, A is the steering angle, and T is the front track width 
+    // to get the inside wheel's angle we'll use the equation (A*L)/(A*T+L), where L is the wheelbase, A is the steering angle, and T is the front track width 
     if (steer_inside >= 0.f) // positive steering angle indicates a left turn
     {
         angleLeft  = (steer_inside * wheelBase) / (steer_inside * trackWidth + wheelBase);
@@ -63,8 +56,8 @@ void __fastcall ComputeAckerman(CoreChassis* chassis, float steering, Matrix44& 
         angleLeft  = steer_inside;
         angleRight = -((-steer_inside * wheelBase) / (-steer_inside * trackWidth + wheelBase));
     }
-    vec4 steerL(angleLeft);
-    vec4 steerR(angleRight);
+    vec4 steerL(angleLeft  + frontToe);
+    vec4 steerR(angleRight - frontToe);
 
     right = _mm_shuffle_ps(
                         _mm_shuffle_ps(VecSin(steerR).simdValue, vec4::s_Zero.simdValue, 16),

@@ -154,9 +154,6 @@
       <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="..\FBTypes\VehiclePhysics\Core\Curve.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\FBTypes\VehiclePhysics\Core\Curve.cpp">
       <Filter>Source Files\FBTypes\VehiclePhysics\Core</Filter>
     </ClCompile>
   </ItemGroup>
