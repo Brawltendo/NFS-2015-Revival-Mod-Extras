@@ -36,7 +36,6 @@ struct PointGraph8
 	float x[kNumPoints];
 	float y[kNumPoints];
 
-public:
 	float Evaluate(float xVal) { return PointGraphEval::Evaluate(kNumPoints, x, y, xVal); }
 
 	void operator=(PointGraph8& pg)
