@@ -168,7 +168,7 @@ void RevivalDriftComponent::UpdateStabilizationForces(NFSVehicle& nfsVehicle, Dr
             Vec4& vRight = SimdToVec4(matrix.xAxis);
             Vec4& linVel = SimdToVec4(nfsVehicle.m_linearVelocity);
             float angleRatio = (fabsf(nfsVehicle.m_sideSlipAngle) - LowAngleForAutoDriftSteer) / (HighAngleForAutoDriftSteer - LowAngleForAutoDriftSteer);
-            float dpSideVel = Dot(linVel, vRight);
+            float dpSideVel = Dot3(linVel, vRight);
             // use drift config fields for compatibility with performance mod system
             const float sideForceScale = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_DefaultSteering, driftComp.mpParams->driftScaleParams->Default_steering);
             const float extForceMagnitude = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_SideForceMagnitude, driftComp.mpParams->driftScaleParams->Side_force_magnitude);
@@ -211,7 +211,7 @@ void RevivalDriftComponent::UpdateStabilizationForces(NFSVehicle& nfsVehicle, Dr
         // add counter yaw to give some extra weight to the steering
         Vec4 torque(nfsVehicle.m_raceCar->mChassisResult.outputState.torqueAppliedToCar);
         torque.w = 0.f;
-        float yaw = Dot(torque, vUp);
+        float yaw = Dot3(torque, vUp);
         float counterYaw = yaw * driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_AligningTorqueEffectInDrift, nfsVehicle.m_data->Steering->AligningTorqueEffectInDrift) - yaw;
         /*bool countersteering = nfsVehicle.m_raceCarInputState.inputSteering * -nfsVehicle.m_sideSlipAmount < 0.f;
         if (fabsf(nfsVehicle.m_sideSlipAmount) > 0.4f && nfsVehicle.m_forwardSpeed >= MinSpeedForAutoDriftSteer && countersteering)
@@ -272,7 +272,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
             return;
         }
 
-        float bodySlipAngle = atan2f(Dot(vRight, linVel), Dot(vFwd, linVel));
+        float bodySlipAngle = atan2f(Dot3(vRight, linVel), Dot3(vFwd, linVel));
         float saDegrees = -RadiansToDegrees(bodySlipAngle);
         float steering = nfsVehicle.m_raceCarInputState.inputSteering;
         float absSlipAngle = fabsf(saDegrees);
@@ -298,8 +298,8 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
                 driftComp.mvfTimeSteerLeft.m128_f32[0] = 0.f;
             driftComp.mvfTimeSteerLeft.m128_f32[1] = steering;
 
-            Vec4 fwdVel = linVel - Vec4(Dot(linVel, vUp));
-            float fwdVelMag = VecLength(fwdVel);
+            Vec4 fwdVel = linVel - Vec4(Dot3(linVel, vUp));
+            float fwdVelMag = VecNormal3(fwdVel);
             float saRatio = (absSlipAngle - angleToEnterDrift) / (params.mAngleForMaxDriftScale - angleToEnterDrift);
             saRatio = clamp01(saRatio);
             float speedRatio = (fwdVelMag - params.mSpeedForZeroSpeedMaintenance) / (params.mSpeedForFullSpeedMaintenance - params.mSpeedForZeroSpeedMaintenance);
@@ -417,7 +417,7 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
         // so here we're just counteracting the accel being applied above to give a better feeling of weight to the drift
         if (driftComp.counterSteeringInDrift)
         {
-            float yawSpeed = Dot(angVel, vUp);
+            float yawSpeed = Dot3(angVel, vUp);
             float newYawSpeed = yawSpeed;
             float saRatio = fminf(absSlipAngle / 65.f, 1.f);
             newYawSpeed += (params.mCSYawScaleForZeroSteerTime * params.mYawAccelScale) * (saRatio * params.mSlipAngleRatioScale + 1.f) * dT * steering;
@@ -460,7 +460,7 @@ void RevivalDriftComponent::UpdateHardSteering(NFSVehicle& nfsVehicle)
             Vec4 lastUpdateForce(nfsVehicle.m_driftComponent->mvfSideForceMagnitude);
             Vec4 thisUpdateForce(nfsVehicle.m_raceCarOutputState.forceAppliedToCar);
             thisUpdateForce.w = 0.f;
-            float fwdForceDelta = fabsf(Dot(lastUpdateForce, vFwd)) - fabsf(Dot(thisUpdateForce, vFwd));
+            float fwdForceDelta = fabsf(Dot3(lastUpdateForce, vFwd)) - fabsf(Dot3(thisUpdateForce, vFwd));
             if (fwdForceDelta > 0.f)
             {
                 const float maintainSpeedScale = nfsVehicle.m_performanceModificationComponent->GetModifiedValue(ATM_GasLetOffYawTorque, nfsVehicle.m_data->Drift->Steering_amount_on_exit_drift);

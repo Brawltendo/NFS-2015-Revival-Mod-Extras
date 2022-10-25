@@ -32,6 +32,25 @@ const Vec4 kCosX19Coef(-0.012031586f);
 
 #pragma region Vector Comparisons
 
+// Returns if the input mask is true or false (all members)
+bool VecIsTrue(const Vec4& v)
+{
+	return _mm_movemask_ps(v) == 0xF;
+}
+
+// Returns if the input mask is true or false (specified members)
+// Use CmpMask to create the input mask
+bool VecIsTrue(const Vec4& v, uint8_t cmpMask)
+{
+	return _mm_movemask_ps(v) == cmpMask;
+}
+
+// Returns if the input mask is true or false (any members)
+bool VecIsTrueAny(const Vec4& v)
+{
+	return _mm_movemask_ps(v) != 0;
+}
+
 // Returns true if a < b (all members)
 bool VecCmpLT(const Vec4& a, const Vec4& b)
 {
@@ -329,17 +348,31 @@ Vec4 VecRecip(Vec4& v)
 }
 
 // Performs the dot product of 2 vectors
-float Dot(Vec4& a, Vec4& b)
+float Dot3(Vec4& a, Vec4& b)
 {
 	Vec4 mul = a * b;
-	Vec4 dot = VecSwizzle(mul.simdValue, 1, 1, 1, 1) + VecSwizzle(mul.simdValue, 0, 0, 0, 0) + VecSwizzle(mul.simdValue, 2, 2, 2, 2);
-	return _mm_cvtss_f32(dot.simdValue);
+	Vec4 dot = VecSwizzleMask(mul, k_xxxx) + VecSwizzleMask(mul, k_yyyy) + VecSwizzleMask(mul, k_zzzz);
+	return _mm_cvtss_f32(dot);
 }
 
-// Returns the magnitude of the input vector
-float VecLength(Vec4& v)
+// Performs the dot product of 2 vectors
+Vec4 VecDot3(Vec4& a, Vec4& b)
 {
-	Vec4 dp = Dot(v, v);
+	Vec4 mul = a * b;
+	Vec4 dot = VecSwizzleMask(mul, k_xxxx) + VecSwizzleMask(mul, k_yyyy) + VecSwizzleMask(mul, k_zzzz);
+	return dot;
+}
+
+// Returns the length of the input vector
+Vec4 VecLength3(Vec4& v)
+{
+	return _mm_sqrt_ps(VecDot3(v, v));
+}
+
+// Normalizes the input vector
+float VecNormal3(Vec4& v)
+{
+	Vec4 dp = Dot3(v, v);
 	Vec4 cond = dp.simdValue == Vec4::kZero.simdValue;
 	//__m128 sel   = _mm_or_ps(_mm_andnot_ps(cmp1, dp), _mm_and_ps(Vec4::kOne.simdValue, cond));
 	Vec4 sel = VecSelect(Vec4::kOne, dp, cond);

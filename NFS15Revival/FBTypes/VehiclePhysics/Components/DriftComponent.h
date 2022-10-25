@@ -7,6 +7,8 @@
 // forward declare here to keep out of the fb namespace
 class NFSVehicle;
 class RaceCarPhysicsObject;
+class RaceRigidBody;
+class SteeringParams;
 
 namespace fb
 {
@@ -19,7 +21,6 @@ class DriftComponent
 public:
 	static const bool sbDEBUGEnableDrift = true;
 	//virtual bool IsDrifting();
-	// the game REALLY doesn't like when I try to use these as member functions, so guess we're doing this instead
 
 	void EnterDrift(float lfSpeedMPS, Vec4& lvfStartDriftScale);
 	void ExitDrift(SteeringComponent& lpSteeringComponent);
@@ -42,6 +43,33 @@ public:
 		SteeringComponent& lpSteeringComponent,
 		RaceCarPhysicsObject& lpRaceCar,
 		float lfSpeedMPS,
+		const Vec4& lvfTimeStep,
+		const Vec4& lvfInvTimeStep);
+	void ApplyDamping(
+		const Vec4& lvfAverageSurfaceGripFactor,
+		const Vec4& lvfDampingScale,
+		const Vec4& lvfTimeStep);
+	void ApplyDriftForces(
+		const Vec4& lvfGasInput,
+		const Vec4& lvfBrakeInput,
+		const Vec4& lvfSteeringInput,
+		const Vec4& lvfAbsDriftScale,
+		HandbrakeComponent& lpHandbrake,
+		RaceCarPhysicsObject& lpRaceCar,
+		float lfSpeedMPS,
+		const Vec4& lvfAverageSurfaceGripFactor,
+		const Vec4& lvfTimeStep,
+		const Vec4& lvfInvTimeStep);
+	void UpdateDrift(
+		const Vec4& lvfGasInput,
+		const Vec4& lvfBrakeInput,
+		const Vec4& lvfSteeringInput,
+		const Vec4& lvbSteeringUsingWheel,
+		HandbrakeComponent& lpHandbrake,
+		RaceCarPhysicsObject& lpRaceCar,
+		SteeringComponent& lpSteeringComponent,
+		SteeringParams& lpSteeringParams,
+		const Vec4& lvfAverageSurfaceGripFactor,
 		const Vec4& lvfTimeStep,
 		const Vec4& lvfInvTimeStep);
 
@@ -67,7 +95,7 @@ public:
 
 	bool mbIsDrifting;
 	bool mbIsCounterSteeringInDrift;
-	class RaceRigidBody* mpChassisRigidBody;
+	RaceRigidBody* mpChassisRigidBody;
 	class DriftParams* mpParams;
 	Vec4 mv_DriftYawTorque_NaturalYawTorque_Spare_Spare;
 	Vec4 mvfDriftGasLetOffAmount;

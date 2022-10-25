@@ -223,6 +223,16 @@ struct Vec4
 
 #define CmpMask(x,y,z,w) (x | (y << 1) | (z << 2) | (w << 3))
 
+// Returns if the input mask is true or false (all members)
+bool VecIsTrue(const Vec4& v);
+
+// Returns if the input mask is true or false (specified members)
+// Use CmpMask to create the input mask
+bool VecIsTrue(const Vec4& v, uint8_t cmpMask);
+
+// Returns if the input mask is true or false (any members)
+bool VecIsTrueAny(const Vec4& v);
+
 // Returns true if a < b (all members)
 bool VecCmpLT(const Vec4& a, const Vec4& b);
 
@@ -369,10 +379,16 @@ Vec4 VecNeg(const Vec4& v);
 Vec4 VecRecip(Vec4& v);
 
 // Performs the dot product of 2 vectors
-float Dot(Vec4& a, Vec4& b);
+float Dot3(Vec4& a, Vec4& b);
 
-// Returns the magnitude of the input vector
-float VecLength(Vec4& v);
+// Performs the dot product of 2 vectors
+Vec4 VecDot3(Vec4& a, Vec4& b);
+
+// Returns the length of the input vector
+Vec4 VecLength3(Vec4& v);
+
+// Normalizes the input vector
+float VecNormal3(Vec4& v);
 
 // Performs the cross product of 2 vectors
 Vec4 Cross(Vec4 const& a, Vec4 const& b);

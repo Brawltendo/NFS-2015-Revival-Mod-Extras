@@ -44,19 +44,13 @@ float __fastcall RemapSteeringForDrift_Orig(DriftComponent* driftComp, float ste
     return steeringInput;
 }
 #else
-void __fastcall ExitDrift_Override(fb::DriftComponent* comp, fb::SteeringComponent& lpSteeringComponent)
+void UpdateDrift_Override(fb::DriftComponent* comp, const Vec4& lvfGasInput, const Vec4& lvfBrakeInput, const Vec4& lvfSteeringInput, const Vec4& lvbSteeringUsingWheel, fb::HandbrakeComponent& lpHandbrake, RaceCarPhysicsObject& lpRaceCar, fb::SteeringComponent& lpSteeringComponent, class SteeringParams& lpSteeringParams, const Vec4& lvfAverageSurfaceGripFactor, const Vec4& lvfTimeStep, const Vec4& lvfInvTimeStep)
 {
-    comp->ExitDrift(lpSteeringComponent);
-}
-
-void UpdateDriftState_Override(fb::DriftComponent* comp, const Vec4& lvfGasInput, const Vec4& lvfBrakeInput, const Vec4& lvfSteeringInput, const Vec4& lvbSteeringUsingWheel, fb::HandbrakeComponent& lpHandbrake, fb::SteeringComponent& lpSteeringComponent, class RaceCarPhysicsObject& lpRaceCar, float lfSpeedMPS, const Vec4& lvfTimeStep, const Vec4& lvfInvTimeStep)
-{
-    comp->UpdateDriftState(lvfGasInput, lvfBrakeInput, lvfSteeringInput, lvbSteeringUsingWheel, lpHandbrake, lpSteeringComponent, lpRaceCar, lfSpeedMPS, lvfTimeStep, lvfInvTimeStep);
+    comp->UpdateDrift(lvfGasInput, lvfBrakeInput, lvfSteeringInput, lvbSteeringUsingWheel, lpHandbrake, lpRaceCar, lpSteeringComponent, lpSteeringParams, lvfAverageSurfaceGripFactor, lvfTimeStep, lvfInvTimeStep);
 }
 
 float __fastcall calcSteeringFromPitchAndYaw_Override(NFSVehicle* const nfsVehicle, float pitch, float yaw)
-{
-    //return clamp(nfsVehicle->m_input->m_yaw / (RadiansToDegrees(nfsVehicle->m_raceCar->mSteeringResultState.steeringRangeLeft) / nfsVehicle->m_raceCar->mVehicleTuning.maxSteeringAngle), -1.f, 1.f);  
+{  
     // they do some trig to get the steering input with an input that's completely unused, so let's just simplify that
     return nfsVehicle->m_input->m_yaw;
 }
@@ -241,8 +235,7 @@ DWORD WINAPI Start(LPVOID lpParam)
     DebugLogPrint("gameContext: %I64X\n", gameContext);
     
     #if !USE_REVIVAL_COMPONENT
-    InjectHook(0x144194D20, ExitDrift_Override);
-    InjectHook(0x1441980F0, UpdateDriftState_Override);
+    InjectHook(0x144197250, UpdateDrift_Override);
     InjectHook(0x144173270, calcSteeringFromPitchAndYaw_Override);
     #else
     PatchDampPitchYawRoll();

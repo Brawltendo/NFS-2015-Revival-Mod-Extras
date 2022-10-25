@@ -882,6 +882,13 @@ static_assert(sizeof(NFSVehicle) == 0x1330, "NFSVehicle");
 class RaceRigidBody
 {
 public:
+	Vec4& GetLinearVelocity(Vec4& linVelOut)
+	{
+		typedef Vec4&(__fastcall* FuncSig)(RaceRigidBody*, Vec4&);
+		FuncSig native = reinterpret_cast<FuncSig>(0x144171830);
+		return native(this, linVelOut);
+	}
+
 	NFSVehicle* nfsVehicle; //0x0000
 	char pad_0008[128]; //0x0008
 }; //Size: 0x0088
