@@ -82,6 +82,21 @@
     <Filter Include="Source Files\FBTypes\VehiclePhysics\Core">
       <UniqueIdentifier>{eed765ef-3697-4134-a59c-d83608d2f68a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\FBTypes\VehiclePhysics\Components">
+      <UniqueIdentifier>{1d75544d-8e00-455f-92b3-043ba3fd949e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\VehiclePhysics\Components">
+      <UniqueIdentifier>{fae357b3-a662-4458-99ab-0d25498dc5fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\VehiclePhysics\Config">
+      <UniqueIdentifier>{516556d0-8d21-435d-a9f8-9801fa0e3d1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\math">
+      <UniqueIdentifier>{72fa50fb-4df5-425e-9559-793a2fdd57c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\DriftComponent">
+      <UniqueIdentifier>{dcc18141-189b-4521-9d22-7112d3f2c5ee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\main.cpp">
@@ -156,11 +171,20 @@
     <ClCompile Include="..\FBTypes\VehiclePhysics\Core\Curve.cpp">
       <Filter>Source Files\FBTypes\VehiclePhysics\Core</Filter>
     </ClCompile>
+    <ClCompile Include="..\FBTypes\VehiclePhysics\Components\DriftComponent.cpp">
+      <Filter>Source Files\FBTypes\VehiclePhysics\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="..\math\Vec4.cpp">
+      <Filter>Source Files\math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\math\Vec2.cpp">
+      <Filter>Source Files\math</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FBTypes\VehiclePhysics\Components\HandbrakeComponent.cpp">
+      <Filter>Source Files\FBTypes\VehiclePhysics\Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\DriftComponent\RevivalDriftComponent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="source\framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -256,6 +280,30 @@
     </ClInclude>
     <ClInclude Include="..\FBTypes\VehiclePhysics\Core\Curve.hpp">
       <Filter>Header Files\FBTypes\VehiclePhysics\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\DriftComponent.h">
+      <Filter>Header Files\FBTypes\VehiclePhysics\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\DriftParams.h">
+      <Filter>Header Files\FBTypes\VehiclePhysics\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FBTypes\VehiclePhysics\Config\RaceVehicleDriftConfigData.h">
+      <Filter>Header Files\FBTypes\VehiclePhysics\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\math\Vec2.h">
+      <Filter>Header Files\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\math\Vec4.h">
+      <Filter>Header Files\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\SteeringComponent.h">
+      <Filter>Header Files\FBTypes\VehiclePhysics\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="source\DriftComponent\RevivalDriftComponent.h">
+      <Filter>Header Files\DriftComponent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\HandbrakeComponent.h">
+      <Filter>Header Files\FBTypes\VehiclePhysics\Components</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

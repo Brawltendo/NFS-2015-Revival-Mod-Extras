@@ -8,15 +8,23 @@
 #include "util\debug\render\DebugRenderer.h"
 #include "util\debug\render\DebugRendererFB.h"
 #endif
+#if USE_REVIVAL_COMPONENT
 #include "DriftComponent\RevivalDriftComponent.h"
+#else
+#include "VehiclePhysics/Components/DriftComponent.h"
+#include "VehiclePhysics/Components/DriftParams.h"
+#include <FBTypes/VehiclePhysics/Components/SteeringComponent.h>
+#include <FBTypes/VehiclePhysics/Components/HandbrakeComponent.h>
+#include "PerformanceModification/PerformanceModification.h"
+#endif
 #include "NFSClasses.h"
 #include <algorithm>
 #include "util/debug/debug.h"
 
 
-
 #pragma region PATCH_FUNCTIONS_REGION
 
+#if USE_REVIVAL_COMPONENT
 void __fastcall UpdateDrift_Orig(DriftComponent* driftComponent, const __m128* lvfGasInput, const __m128* lvfBrakeInput, const __m128* lvfSteeringInput, const __m128* lvbSteeringUsingWheel, HandbrakeComponent& lpHandbrake, const class RaceCarPhysicsObject* lpRaceCar, SteeringComponent& lpSteeringComponent, const class SteeringParams& lpSteeringParams, const __m128& lvfAverageSurfaceGripFactor, const __m128& lvfTimeStep, const __m128& lvfInvTimeStep)
 {
     NFSVehicle& nfsVehicle = **(NFSVehicle**)lpRaceCar;
@@ -35,8 +43,26 @@ float __fastcall RemapSteeringForDrift_Orig(DriftComponent* driftComp, float ste
     // stop the game from normally calculating this because it'll lock up the steering with the new drift code
     return steeringInput;
 }
+#else
+void __fastcall ExitDrift_Override(fb::DriftComponent* comp, fb::SteeringComponent& lpSteeringComponent)
+{
+    comp->ExitDrift(lpSteeringComponent);
+}
 
-void __fastcall ComputeAckerman(CoreChassis* chassis, float steering, Matrix44& bodyMatrix, float wheelBase, float trackWidth, float frontToe, vec4& left, vec4& right, float& angleLeft, float& angleRight)
+void UpdateDriftState_Override(fb::DriftComponent* comp, const Vec4& lvfGasInput, const Vec4& lvfBrakeInput, const Vec4& lvfSteeringInput, const Vec4& lvbSteeringUsingWheel, fb::HandbrakeComponent& lpHandbrake, fb::SteeringComponent& lpSteeringComponent, class RaceCarPhysicsObject& lpRaceCar, float lfSpeedMPS, const Vec4& lvfTimeStep, const Vec4& lvfInvTimeStep)
+{
+    comp->UpdateDriftState(lvfGasInput, lvfBrakeInput, lvfSteeringInput, lvbSteeringUsingWheel, lpHandbrake, lpSteeringComponent, lpRaceCar, lfSpeedMPS, lvfTimeStep, lvfInvTimeStep);
+}
+
+float __fastcall calcSteeringFromPitchAndYaw_Override(NFSVehicle* const nfsVehicle, float pitch, float yaw)
+{
+    //return clamp(nfsVehicle->m_input->m_yaw / (RadiansToDegrees(nfsVehicle->m_raceCar->mSteeringResultState.steeringRangeLeft) / nfsVehicle->m_raceCar->mVehicleTuning.maxSteeringAngle), -1.f, 1.f);  
+    // they do some trig to get the steering input with an input that's completely unused, so let's just simplify that
+    return nfsVehicle->m_input->m_yaw;
+}
+#endif
+
+void __fastcall ComputeAckerman(CoreChassis* chassis, float steering, Matrix44& bodyMatrix, float wheelBase, float trackWidth, float frontToe, Vec4& left, Vec4& right, float& angleLeft, float& angleRight)
 {
     float steer_inside = steering;
     // invert steering angle if past 180 degrees
@@ -56,11 +82,11 @@ void __fastcall ComputeAckerman(CoreChassis* chassis, float steering, Matrix44& 
         angleLeft  = steer_inside;
         angleRight = -((-steer_inside * wheelBase) / (-steer_inside * trackWidth + wheelBase));
     }
-    vec4 steerL(angleLeft  + frontToe);
-    vec4 steerR(angleRight - frontToe);
+    Vec4 steerL(angleLeft  + frontToe);
+    Vec4 steerR(angleRight - frontToe);
 
     right = _mm_shuffle_ps(
-                        _mm_shuffle_ps(VecSin(steerR).simdValue, vec4::s_Zero.simdValue, 16),
+                        _mm_shuffle_ps(VecSin(steerR).simdValue, Vec4::kZero.simdValue, 16),
                         VecCos(steerR).simdValue,
                         40);
     right = _mm_add_ps(
@@ -70,7 +96,7 @@ void __fastcall ComputeAckerman(CoreChassis* chassis, float steering, Matrix44& 
         _mm_mul_ps(bodyMatrix.zAxis, VecSwizzleMask(right.simdValue, 170)));
 
     left = _mm_shuffle_ps(
-                        _mm_shuffle_ps(VecSin(steerL).simdValue, vec4::s_Zero.simdValue, 16),
+                        _mm_shuffle_ps(VecSin(steerL).simdValue, Vec4::kZero.simdValue, 16),
                         VecCos(steerL).simdValue,
                         40);
     left = _mm_add_ps(
@@ -80,9 +106,9 @@ void __fastcall ComputeAckerman(CoreChassis* chassis, float steering, Matrix44& 
         _mm_mul_ps(bodyMatrix.zAxis, VecSwizzleMask(left.simdValue, 170)));
 }
 
-//void __fastcall DoSteering(CoreChassis* chassis, ChassisStaticState* staticState, ChassisDynamicState* state, ChassisResult* result, vec4& steerL, vec4& steerR)
+//void __fastcall DoSteering(CoreChassis* chassis, ChassisStaticState* staticState, ChassisDynamicState* state, ChassisResult* result, Vec4& steerL, Vec4& steerR)
 //{
-//    void(__fastcall* computeAckerman)(void*, float, Matrix44&, float, float, float, vec4&, vec4&) = reinterpret_cast<void(__fastcall*)(void*, float, Matrix44&, float, float, float, vec4&, vec4&)>(0x1441B2F20);
+//    void(__fastcall* computeAckerman)(void*, float, Matrix44&, float, float, float, Vec4&, Vec4&) = reinterpret_cast<void(__fastcall*)(void*, float, Matrix44&, float, float, float, Vec4&, Vec4&)>(0x1441B2F20);
 //
 //    float steeringInput;
 //    if (state->isAIControlled)
@@ -213,11 +239,17 @@ DWORD WINAPI Start(LPVOID lpParam)
     uintptr_t game = (uintptr_t)GetModuleHandle(NULL);
     uintptr_t gameContext = game + 0x0289CDC0;
     DebugLogPrint("gameContext: %I64X\n", gameContext);
-
+    
+    #if !USE_REVIVAL_COMPONENT
+    InjectHook(0x144194D20, ExitDrift_Override);
+    InjectHook(0x1441980F0, UpdateDriftState_Override);
+    InjectHook(0x144173270, calcSteeringFromPitchAndYaw_Override);
+    #else
     PatchDampPitchYawRoll();
     PatchDampLinearVelocityXYZ();
     InjectHook(0x144197250, UpdateDrift_Orig);
     InjectHook(0x1441967A0, RemapSteeringForDrift_Orig);
+    #endif
     InjectHook(0x1441B2F20, ComputeAckerman);
     //InjectHook(0x1441B3CF0, DoSteering);
 

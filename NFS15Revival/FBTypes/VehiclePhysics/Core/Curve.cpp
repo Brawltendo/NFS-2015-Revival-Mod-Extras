@@ -33,7 +33,7 @@ float PointGraphEval::Evaluate(const int numPoints, const float x[], const float
 	return y[0];
 }
 
-PointGraph8& initPointGraph8FromCurveData(PointGraph8& outGraph, const vec4 curveData[])
+PointGraph8& initPointGraph8FromCurveData(PointGraph8& outGraph, const Vec4 curveData[])
 {
 	const float xMin = curveData[0].x;
 	const float yMin = curveData[0].y;
@@ -47,7 +47,7 @@ PointGraph8& initPointGraph8FromCurveData(PointGraph8& outGraph, const vec4 curv
 
 	float spanX = xMax - xMin;
 	float spanY = yMax - yMin;
-	const vec4* inCurve = &curveData[2];
+	const Vec4* inCurve = &curveData[2];
 	// inverse lerp over the set of data
 	for (int i = 0; i < PointGraph8::kNumPoints; ++i)
 	{

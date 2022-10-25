@@ -16,9 +16,9 @@
 
 std::stringstream debug_controlledDriftStr;
 std::stringstream debug_driftEntryReasonStr;
-__m128 debug_carPos = vec4::s_Zero.simdValue;
-__m128 debug_sideForceWorldPos = vec4::s_Zero.simdValue;
-__m128 debug_fwdForceWorldPos = vec4::s_Zero.simdValue;
+__m128 debug_carPos = Vec4::kZero.simdValue;
+__m128 debug_sideForceWorldPos = Vec4::kZero.simdValue;
+__m128 debug_fwdForceWorldPos = Vec4::kZero.simdValue;
 
 #pragma endregion RevivalDebug
 
@@ -139,9 +139,9 @@ fb::DebugRenderVertex* fb::DebugRenderer::writeCachedVertices(fb::DebugGeometryT
 		return nullptr;
 }
 
-void fb::DebugRenderer::drawLine2d(vec2* start, vec2* end, fb::Color32 color)
+void fb::DebugRenderer::drawLine2d(Vec2* start, Vec2* end, fb::Color32 color)
 {
-	void(__fastcall* native)(void*, vec2*, vec2*, Color32) = reinterpret_cast<void(__fastcall*)(void*, vec2*, vec2*, Color32)>(DebugRenderer_drawLine2d);
+	void(__fastcall* native)(void*, Vec2*, Vec2*, Color32) = reinterpret_cast<void(__fastcall*)(void*, Vec2*, Vec2*, Color32)>(DebugRenderer_drawLine2d);
 
 	void* debugRender = GetNativeDebugRender();
 	if (debugRender != nullptr)
@@ -162,9 +162,9 @@ void fb::DebugRenderer::drawLine3d(float start[], float end[], fb::Color32 color
 	++vtx;
 }
 
-void fb::DebugRenderer::drawLineRect2d(vec2* min, vec2* max, fb::Color32 color)
+void fb::DebugRenderer::drawLineRect2d(Vec2* min, Vec2* max, fb::Color32 color)
 {
-	void(__fastcall* native)(void*, vec2*, vec2*, Color32) = reinterpret_cast<void(__fastcall*)(void*, vec2*, vec2*, Color32)>(DebugRenderer_drawLineRect2d);
+	void(__fastcall* native)(void*, Vec2*, Vec2*, Color32) = reinterpret_cast<void(__fastcall*)(void*, Vec2*, Vec2*, Color32)>(DebugRenderer_drawLineRect2d);
 
 	void* debugRender = GetNativeDebugRender();
 	if (debugRender != nullptr)
@@ -189,7 +189,7 @@ void fb::DebugRenderer::drawText(float x, float y, const char* text, fb::Color32
 	{
 		int res[2] = { 0 };
 		getScreenRes(debugRender, res);
-		vec2 pos((x + 1.f) * res[0] * 0.5f, (y + 1.f) * res[1] * 0.5f);
+		Vec2 pos((x + 1.f) * res[0] * 0.5f, (y + 1.f) * res[1] * 0.5f);
 
 		native(debugRender, (int)pos.x, (int)pos.y, text, color, scale);
 	}

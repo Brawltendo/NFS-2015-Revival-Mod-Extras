@@ -21,7 +21,7 @@ float sign(float in);
 
 float GetSpeedMph(class NFSVehicle* nfsVehicle);
 void SetVehicleYaw(class NFSVehicle& nfsVehicle, float originalYaw, float targetYaw, float dT);
-void SetVehicleLinearVel(class NFSVehicle& nfsVehicle, vec4& originalLinVel, vec4& targetLinVel, float dT);
+void SetVehicleLinearVel(class NFSVehicle& nfsVehicle, Vec4& originalLinVel, Vec4& targetLinVel, float dT);
 
 
 #pragma region CONVERSIONS
@@ -53,6 +53,12 @@ inline
 float MphToMps(const float mph)
 {
 	return mph * 0.44703001f;
+}
+
+inline
+float MpsToMph(const float mps)
+{
+	return mps * 2.2369399f;
 }
 
 #pragma endregion CONVERSIONS

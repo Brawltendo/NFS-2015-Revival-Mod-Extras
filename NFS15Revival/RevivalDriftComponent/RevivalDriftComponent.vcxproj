@@ -19,6 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\FBTypes\VehiclePhysics\Components\DriftComponent.cpp" />
+    <ClCompile Include="..\FBTypes\VehiclePhysics\Components\HandbrakeComponent.cpp" />
     <ClCompile Include="..\FBTypes\VehiclePhysics\Core\Curve.cpp" />
     <ClCompile Include="..\imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="..\imgui\backends\imgui_impl_win32.cpp" />
@@ -33,6 +35,8 @@
     <ClCompile Include="..\kiero\minhook\src\hde\hde64.c" />
     <ClCompile Include="..\kiero\minhook\src\hook.c" />
     <ClCompile Include="..\kiero\minhook\src\trampoline.c" />
+    <ClCompile Include="..\math\Vec2.cpp" />
+    <ClCompile Include="..\math\Vec4.cpp" />
     <ClCompile Include="..\util\debug\render\DebugRenderer.cpp" />
     <ClCompile Include="..\util\debug\render\DebugRendererFB.cpp" />
     <ClCompile Include="..\util\debug\render\shared.cpp" />
@@ -49,6 +53,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\FBTypes\VehicleComponents.h" />
+    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\DriftComponent.h" />
+    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\DriftParams.h" />
+    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\HandbrakeComponent.h" />
+    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\SteeringComponent.h" />
+    <ClInclude Include="..\FBTypes\VehiclePhysics\Config\RaceVehicleDriftConfigData.h" />
     <ClInclude Include="..\FBTypes\VehiclePhysics\Core\Curve.hpp" />
     <ClInclude Include="..\imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="..\imgui\backends\imgui_impl_win32.h" />
@@ -67,6 +76,8 @@
     <ClInclude Include="..\kiero\minhook\src\hde\table32.h" />
     <ClInclude Include="..\kiero\minhook\src\hde\table64.h" />
     <ClInclude Include="..\kiero\minhook\src\trampoline.h" />
+    <ClInclude Include="..\math\Vec2.h" />
+    <ClInclude Include="..\math\Vec4.h" />
     <ClInclude Include="..\util\debug\debug.h" />
     <ClInclude Include="..\util\debug\render\DebugRenderer.h" />
     <ClInclude Include="..\util\debug\render\DebugRendererFB.h" />
@@ -212,7 +223,7 @@ xcopy "$(SolutionDir)$(Platform)\$(Configuration)\$(TargetName).pdb" "L:\Games\N
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;NFS15REVIVAL_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;NFS15REVIVAL_EXPORTS;_WINDOWS;_USRDLL;USE_REVIVAL_COMPONENT=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>

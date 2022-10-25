@@ -1,6 +1,11 @@
 #pragma once
 #include <stdint.h>
 
+#if !USE_REVIVAL_COMPONENT
+namespace fb
+{
+#endif // !USE_REVIVAL_COMPONENT
+
 enum RaceVehicleModificationType
 {
     ModificationType_Scalar = 0,
@@ -199,3 +204,9 @@ public:
     PerformanceModifier m_modifiers[ATM_Max];
 
 }; static_assert(sizeof(PerformanceModificationComponent) == 0xE28, "PerformanceModificationComponent size must be 0xE28");
+
+#if !USE_REVIVAL_COMPONENT
+}
+#endif // !USE_REVIVAL_COMPONENT
+
+

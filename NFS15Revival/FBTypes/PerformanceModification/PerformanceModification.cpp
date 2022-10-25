@@ -2,6 +2,11 @@
 #include "PerformanceModification.h"
 #include "NFSClasses.h"
 
+#if !USE_REVIVAL_COMPONENT
+namespace fb
+{
+#endif // !USE_REVIVAL_COMPONENT
+
 float PerformanceModificationComponent::GetModifiedValue(int attributeToModify, float unmodifiedValue)
 {
 	float value = 0.f;
@@ -25,3 +30,7 @@ float PerformanceModificationComponent::GetModifiedValue(int attributeToModify, 
 	}
 	return value;
 }
+
+#if !USE_REVIVAL_COMPONENT
+}
+#endif // !USE_REVIVAL_COMPONENT

@@ -53,4 +53,4 @@ struct PointGraph8
 
 // Creates a PointGraph from a 4D vector array. The original arrays from the vehicle configs are never greater or less than 10 members.
 // First two members of array represent min and max x/y values respectively; all following indices are for each x/y curve point, x being the input, and y being the output.
-PointGraph8& initPointGraph8FromCurveData(PointGraph8& outGraph, const vec4 curveData[]);
+PointGraph8& initPointGraph8FromCurveData(PointGraph8& outGraph, const Vec4 curveData[]);

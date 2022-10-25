@@ -555,7 +555,15 @@ public:
 	float m_brake; //0x002C
 	float m_oldBrake; //0x0030
 	float m_handBrake; //0x0034
-	char pad_0038[80]; //0x0038
+	float m_clutch; //0x0038
+	bool m_gearUp; //0x003C
+	bool m_gearDown; //0x003D
+	bool m_boost; //0x003E
+	bool m_crawl; //0x003F
+	GearID m_requestedGear; //0x0040
+	int m_steeringType; //0x0044
+	uint32_t m_flags; //0x0048
+	int pad_004C[14]; //0x004C
 }; //Size: 0x0088
 
 class ForceFeedbackData
@@ -624,6 +632,18 @@ static_assert(sizeof(VehiclePhysicsJob_Input) == 0x20, "VehiclePhysicsJob_Input"
 class NFSVehicle
 {
 public:
+	float wheelLoad(int wheelInd)
+	{
+		float(__fastcall* native)(NFSVehicle*,int) = reinterpret_cast<float(__fastcall*)(NFSVehicle*,int)>(0x14418E160);
+		return native(this, wheelInd);
+	}
+
+	float getBurnoutScale()
+	{
+		float(__fastcall* native)(NFSVehicle*) = reinterpret_cast<float(__fastcall*)(NFSVehicle*)>(0x1441792E0);
+		return native(this);
+	}
+
 	class RaceVehicleConfigData* m_data; //0x0000
 	char pad_0008[16]; //0x0008
 	class VehicleInput* m_input; //0x0018
@@ -707,7 +727,25 @@ public:
 	float m_snapToGroundTimer; //0x0CD0
 	float m_hitHumanVehicleTimer; //0x0CD4
 	float m_collisionTimer; //0x0CD8
-	uint32_t m_activeCollisionFlags; //0x0CDC
+	union
+	{
+		struct CollisionFlags
+		{
+			bool bIsColliding : 1;
+			bool bUnk1 : 1;
+			bool bUnk2 : 1;
+			bool bUnk3 : 1;
+			bool bUnk4 : 1;
+			bool bUnk5 : 1;
+			bool bUnk6 : 1;
+			bool bUnk7 : 1;
+			bool bIsLeftSideCollision : 1;
+			bool bIsRightSideCollision : 1;
+			bool bIsFrontCollision : 1;
+		};
+		uint32_t m_flags;
+	} m_activeCollisionFlags; //0x0CDC
+	//uint32_t m_activeCollisionFlags; //0x0CDC
 	uint32_t m_activeVehicleCollisionFlags; //0x0CE0
 	float m_VehicleCollisionTimer; //0x0CE4
 	float m_stoppedTime; //0x0CE8

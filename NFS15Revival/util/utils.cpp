@@ -75,18 +75,18 @@ void SetVehicleYaw(NFSVehicle& nfsVehicle, float originalYaw, float targetYaw, f
 	// DampPitchYawRoll has been patched to add angular velocity instead of multiplying the original by the damping values
 	// since I have no idea where the native function to set angular velocity is, let's just do it this way now that this function is only called here
 	// this way it'll just add the difference between the current and target angular vel, giving the same result anyway
-	vec4 newYaw(targetYaw - originalYaw);
-	vec4 timestep(dT);
-	__m128* zero = (__m128*) & vec4::s_Zero.simdValue;
+	Vec4 newYaw(targetYaw - originalYaw);
+	Vec4 timestep(dT);
+	__m128* zero = (__m128*) & Vec4::kZero.simdValue;
 	DampPitchYawRoll(nfsVehicle.m_rigidBodyInterface, zero, &newYaw.simdValue, zero, &timestep.simdValue);
 }
 
-void SetVehicleLinearVel(NFSVehicle& nfsVehicle, vec4& originalLinVel, vec4& targetLinVel, float dT)
+void SetVehicleLinearVel(NFSVehicle& nfsVehicle, Vec4& originalLinVel, Vec4& targetLinVel, float dT)
 {
-	vec4 newLv(targetLinVel - originalLinVel);
-	vec4 timestep(dT);
-	vec4 x = newLv.x;
-	vec4 y = newLv.y;
-	vec4 z = newLv.z;
+	Vec4 newLv(targetLinVel - originalLinVel);
+	Vec4 timestep(dT);
+	Vec4 x = newLv.x;
+	Vec4 y = newLv.y;
+	Vec4 z = newLv.z;
 	DampLinearVelocityXYZ(nfsVehicle.m_rigidBodyInterface, &x.simdValue, &y.simdValue, &z.simdValue, &timestep.simdValue);
 }

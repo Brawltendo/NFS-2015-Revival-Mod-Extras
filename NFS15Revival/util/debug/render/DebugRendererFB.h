@@ -127,13 +127,13 @@ namespace fb
 		DebugRenderVertex* writeCachedVertices(DebugGeometryType type, uint32_t vertexCount);
 
 		// Draws a line to the screen in 2D space
-		void drawLine2d(vec2* start, vec2* end, Color32 color);
+		void drawLine2d(Vec2* start, Vec2* end, Color32 color);
 
 		// Draws a line to the screen in 3D space
 		void drawLine3d(float start[], float end[], Color32 color);
 
 		// Draws a line box to the screen in 2D space
-		void drawLineRect2d(vec2* start, vec2* end, Color32 color);
+		void drawLineRect2d(Vec2* start, Vec2* end, Color32 color);
 		
 		// Draws text to the screen
 		void drawText(int x, int y, const char* text, Color32 color, float scale);

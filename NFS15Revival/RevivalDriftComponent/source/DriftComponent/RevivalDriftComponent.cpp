@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "RevivalDriftComponent.h"
+#include "VehiclePhysics/Components/DriftComponent.h"
 #include "NFSClasses.h"
 #include "util/memoryutils.h"
 #include <algorithm>
@@ -16,6 +17,8 @@ extern __m128 debug_sideForceWorldPos;
 extern __m128 debug_fwdForceWorldPos;
 
 #endif
+
+#if USE_REVIVAL_COMPONENT
 
 void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& driftComp, int& numWheelsOnGround, const DriftParameters& params)
 {
@@ -145,9 +148,9 @@ void RevivalDriftComponent::UpdateStabilizationForces(NFSVehicle& nfsVehicle, Dr
     // draw debug forces only for the player vehicle
     if ((*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0] == &nfsVehicle)
     {
-        debug_carPos = vec4::s_Zero.simdValue;
-        debug_sideForceWorldPos = vec4::s_Zero.simdValue;
-        debug_fwdForceWorldPos = vec4::s_Zero.simdValue;
+        debug_carPos = Vec4::kZero.simdValue;
+        debug_sideForceWorldPos = Vec4::kZero.simdValue;
+        debug_fwdForceWorldPos = Vec4::kZero.simdValue;
     }
 #endif
 
@@ -156,14 +159,14 @@ void RevivalDriftComponent::UpdateStabilizationForces(NFSVehicle& nfsVehicle, Dr
     {
         Matrix44 matrix;
         RaceRigidBody_GetTransform(driftComp.mpChassisRigidBody, &matrix);
-        vec4& vUp = SimdToVec4(matrix.yAxis);
-        vec4& vFwd = SimdToVec4(matrix.zAxis);
-        vec4 timestep(nfsVehicle.m_currentUpdateDt);
+        Vec4& vUp = SimdToVec4(matrix.yAxis);
+        Vec4& vFwd = SimdToVec4(matrix.zAxis);
+        Vec4 timestep(nfsVehicle.m_currentUpdateDt);
 
         if ((nfsVehicle.m_sideSlipAngle <= MaxAutoSteerAngle && nfsVehicle.m_sideSlipAngle >= -MaxAutoSteerAngle) && nfsVehicle.m_forwardSpeed >= MinSpeedForAutoDriftSteer)
         {
-            vec4& vRight = SimdToVec4(matrix.xAxis);
-            vec4& linVel = SimdToVec4(nfsVehicle.m_linearVelocity);
+            Vec4& vRight = SimdToVec4(matrix.xAxis);
+            Vec4& linVel = SimdToVec4(nfsVehicle.m_linearVelocity);
             float angleRatio = (fabsf(nfsVehicle.m_sideSlipAngle) - LowAngleForAutoDriftSteer) / (HighAngleForAutoDriftSteer - LowAngleForAutoDriftSteer);
             float dpSideVel = Dot(linVel, vRight);
             // use drift config fields for compatibility with performance mod system
@@ -180,16 +183,16 @@ void RevivalDriftComponent::UpdateStabilizationForces(NFSVehicle& nfsVehicle, Dr
             float countersteerMultiplier = 1.f;
             if (driftComp.counterSteeringInDrift)
                 countersteerMultiplier += clamp(fabsf(nfsVehicle.m_steeringOutputDirection), 0.f, 0.6f);
-            vec4 sideForce(force * sign(dpSideVel) * sideForceScale * countersteerMultiplier);
+            Vec4 sideForce(force * sign(dpSideVel) * sideForceScale * countersteerMultiplier);
             sideForce *= vRight;
-            vec4 forwardForce(force * forwardForceScale);
+            Vec4 forwardForce(force * forwardForceScale);
             forwardForce *= vFwd;
 
         #ifdef _DEBUG
             // draw debug forces only for the player vehicle
             if ((*fb::RaceVehicleJobHandler::m_instance)->m_vehicles[0] == &nfsVehicle)
             {
-                vec4 pos(nfsVehicle.m_raceCarInputState.matrix.wAxis);
+                Vec4 pos(nfsVehicle.m_raceCarInputState.matrix.wAxis);
                 debug_carPos = pos.simdValue;
 
                 debug_sideForceWorldPos = (sideForce / 1000.f + pos).simdValue;
@@ -201,12 +204,12 @@ void RevivalDriftComponent::UpdateStabilizationForces(NFSVehicle& nfsVehicle, Dr
             }
         #endif
 
-            vec4 autoSteerForce = sideForce + forwardForce;
+            Vec4 autoSteerForce = sideForce + forwardForce;
             AddWorldCOMForceLogged(driftComp.mpChassisRigidBody, &autoSteerForce.simdValue, &timestep.simdValue);
         }
 
         // add counter yaw to give some extra weight to the steering
-        vec4 torque(nfsVehicle.m_raceCar->mChassisResult.outputState.torqueAppliedToCar);
+        Vec4 torque(nfsVehicle.m_raceCar->mChassisResult.outputState.torqueAppliedToCar);
         torque.w = 0.f;
         float yaw = Dot(torque, vUp);
         float counterYaw = yaw * driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_AligningTorqueEffectInDrift, nfsVehicle.m_data->Steering->AligningTorqueEffectInDrift) - yaw;
@@ -254,11 +257,11 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
 
         Matrix44 matrix;
         RaceRigidBody_GetTransform(driftComp.mpChassisRigidBody, &matrix);
-        vec4& linVel = SimdToVec4(nfsVehicle.m_linearVelocity);
-        vec4& angVel = SimdToVec4(nfsVehicle.m_angularVelocity);
-        vec4& vRight = SimdToVec4(matrix.xAxis);
-        vec4& vUp    = SimdToVec4(matrix.yAxis);
-        vec4& vFwd   = SimdToVec4(matrix.zAxis);
+        Vec4& linVel = SimdToVec4(nfsVehicle.m_linearVelocity);
+        Vec4& angVel = SimdToVec4(nfsVehicle.m_angularVelocity);
+        Vec4& vRight = SimdToVec4(matrix.xAxis);
+        Vec4& vUp    = SimdToVec4(matrix.yAxis);
+        Vec4& vFwd   = SimdToVec4(matrix.zAxis);
         const float speedMps = nfsVehicle.m_forwardSpeed;
         // exit drift completely if any of these conditions are met
         if (numWheelsOnGround <= 1 || speedMps <= params.mSpeedToExitDrift || speedMps <= MphToMps(13.f))
@@ -295,15 +298,15 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
                 driftComp.mvfTimeSteerLeft.m128_f32[0] = 0.f;
             driftComp.mvfTimeSteerLeft.m128_f32[1] = steering;
 
-            vec4 fwdVel = linVel - Dot(linVel, vUp);
+            Vec4 fwdVel = linVel - Vec4(Dot(linVel, vUp));
             float fwdVelMag = VecLength(fwdVel);
             float saRatio = (absSlipAngle - angleToEnterDrift) / (params.mAngleForMaxDriftScale - angleToEnterDrift);
             saRatio = clamp01(saRatio);
             float speedRatio = (fwdVelMag - params.mSpeedForZeroSpeedMaintenance) / (params.mSpeedForFullSpeedMaintenance - params.mSpeedForZeroSpeedMaintenance);
             speedRatio = clamp01(speedRatio);
-            vec4 normalizedVel = fwdVel * (1.f / fwdVelMag);
+            Vec4 normalizedVel = fwdVel * Vec4(1.f / fwdVelMag);
             float maintainSpeedAmount = params.mDriftMaintainSpeedAmount * dT * externalForcesScale * saRatio * speedRatio;
-            vec4 maintainSpeedForce = linVel + ((vFwd - normalizedVel) * params.mDriftMaintainSpeedScale + normalizedVel) * maintainSpeedAmount;
+            Vec4 maintainSpeedForce = linVel + ((vFwd - normalizedVel) * Vec4(params.mDriftMaintainSpeedScale) + normalizedVel) * Vec4(maintainSpeedAmount);
             // may or may not add this back at some point
             // don't really see a use for it with RevivalDriftComponent::UpdateStabilizationForces in place though since that's already being used to maintain side and forward speed
             //SetLinearVelocity(nfsVehicle.dynamicPhysEnt, (uint16_t*)&(nfsVehicle.pad_00C8[0]), &maintainSpeedForce.simdValue);
@@ -453,16 +456,16 @@ void RevivalDriftComponent::UpdateHardSteering(NFSVehicle& nfsVehicle)
         {
             Matrix44 matrix;
             RaceRigidBody_GetTransform(nfsVehicle.m_rigidBodyInterface, &matrix);
-            vec4& vFwd = SimdToVec4(matrix.zAxis);
-            vec4 lastUpdateForce(nfsVehicle.m_driftComponent->mvfSideForceMagnitude);
-            vec4 thisUpdateForce(nfsVehicle.m_raceCarOutputState.forceAppliedToCar);
+            Vec4& vFwd = SimdToVec4(matrix.zAxis);
+            Vec4 lastUpdateForce(nfsVehicle.m_driftComponent->mvfSideForceMagnitude);
+            Vec4 thisUpdateForce(nfsVehicle.m_raceCarOutputState.forceAppliedToCar);
             thisUpdateForce.w = 0.f;
             float fwdForceDelta = fabsf(Dot(lastUpdateForce, vFwd)) - fabsf(Dot(thisUpdateForce, vFwd));
             if (fwdForceDelta > 0.f)
             {
                 const float maintainSpeedScale = nfsVehicle.m_performanceModificationComponent->GetModifiedValue(ATM_GasLetOffYawTorque, nfsVehicle.m_data->Drift->Steering_amount_on_exit_drift);
-                vec4 force(vFwd * fwdForceDelta * maintainSpeedScale);
-                vec4 timestep(nfsVehicle.m_currentUpdateDt);
+                Vec4 force(vFwd * Vec4(fwdForceDelta) * Vec4(maintainSpeedScale));
+                Vec4 timestep(nfsVehicle.m_currentUpdateDt);
                 AddWorldCOMForceLogged(nfsVehicle.m_rigidBodyInterface, &force.simdValue, &timestep.simdValue);
             }
         }
@@ -471,3 +474,5 @@ void RevivalDriftComponent::UpdateHardSteering(NFSVehicle& nfsVehicle)
     nfsVehicle.m_driftComponent->mvfSideForceMagnitude = nfsVehicle.m_raceCarOutputState.forceAppliedToCar;
     nfsVehicle.m_driftComponent->mvfSideForceMagnitude.m128_f32[3] = 0.f;
 }
+
+#endif // USE_REVIVAL_COMPONENT
