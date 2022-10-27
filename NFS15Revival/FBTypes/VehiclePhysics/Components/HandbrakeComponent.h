@@ -23,7 +23,7 @@ enum EHandbrakeState
 class HandbrakeComponent
 {
 public:
-	Vec4& GetDriftScaleFromHandbrake(Vec4& lvfHandbrakeScaleOut, const class RaceCarPhysicsObject& lpRaceCar);
+	Vec4 GetDriftScaleFromHandbrake(const class RaceCarPhysicsObject& lpRaceCar);
 
 	EHandbrakeState meState; //0x0000
 	char pad_0004[12]; //0x0004

@@ -25,6 +25,7 @@ const Vec4 KVF_FLICK_MAX_TIME_STEERING(0.65f);
 // How much time is allowed to pass from the moment the first flick input is released
 // i.e.: the amount of time since the player has steered left before they start steering right
 const Vec4 KVF_FLICK_MAX_TIME_SINCE_LAST_STEER(0.15f);
+const Vec4 KVF_STARTING_SCALE_FROM_DRIFT_CHAINING(0.1f);
 
 //bool DriftComponent::IsDrifting()
 //{
@@ -140,19 +141,21 @@ void DriftComponent::CheckForEnteringDrift(const Vec4& lvfGasInput, const Vec4& 
 	// the original game uses the body slip angle instead of the avg rear wheel slip angle
 	// it's a really strange change compared to previous games, so here we're gonna revert that
 	Vec4 vfAvgRearSlipAngle = RadiansToDegrees((nfsVehicle.m_raceCarOutputState.tireSlipAngle[2] + nfsVehicle.m_raceCarOutputState.tireSlipAngle[3]) * 0.5f);
-	if (VecCmpLT(VecSelect(vfAngleToEnterAfterFlick, vfAngleToEnterDrift, vbIsFlicking), VecAbs(vfAvgRearSlipAngle)))
+	//if (VecCmpLT(VecSelect(vfAngleToEnterAfterFlick, vfAngleToEnterDrift, vbIsFlicking), VecAbs(vfAvgRearSlipAngle)))
+	if (VecCmpLT(vfAngleToEnterDrift, VecAbs(vfAvgRearSlipAngle)))
 	{
 		// entering a drift
 
 		Vec4 vbWasHandbrakeOn = BoolToVecMask(nfsVehicle.m_wasHandbrakeOnLastUpdate);
-		Vec4 vfHandbrakeDriftScale;
-		lpHandbrake.GetDriftScaleFromHandbrake(vfHandbrakeDriftScale, lpRaceCar);
+		Vec4 vfHandbrakeDriftScale = lpHandbrake.GetDriftScaleFromHandbrake(lpRaceCar);
 		Vec4 vfSlipAngleSign = VecSign(vfAvgRearSlipAngle);
 		Vec4 vfStartingDriftScale = mpParams->mDriftScaleParams.m_driftConfig->Starting_drift_scale;
 		Vec4 vfStartingDriftScaleAfterFlick = mpParams->mDriftScaleParams.m_performanceModificationComponent->GetModifiedValue(ATM_StartingDriftScaleAfterScandinavianFlick, mpParams->mDriftScaleParams.m_driftConfig->Starting_drift_scale_after_scandinavian_flick);
-		vfStartingDriftScale = VecSelect(vfStartingDriftScaleAfterFlick, VecSelect(vfHandbrakeDriftScale, vfStartingDriftScale, vbWasHandbrakeOn), vbIsFlicking);
+		//vfStartingDriftScale = VecSelect(vfStartingDriftScaleAfterFlick, VecSelect(vfHandbrakeDriftScale, vfStartingDriftScale, vbWasHandbrakeOn), vbIsFlicking);
+		vfStartingDriftScale = VecSelect(vfHandbrakeDriftScale, vfStartingDriftScale, vbWasHandbrakeOn);
 
-		Vec4 vfDriftScale = VecSelect(vfSlipAngleSign, VecNeg(vfSlipAngleSign), vbIsFlicking) * (vfStartingDriftScale + Vec4::kEpsilon);
+		//Vec4 vfDriftScale = VecSelect(vfSlipAngleSign, VecNeg(vfSlipAngleSign), vbIsFlicking) * (vfStartingDriftScale + Vec4::kEpsilon);
+		Vec4 vfDriftScale = VecNeg(vfSlipAngleSign) * (vfStartingDriftScale + Vec4::kEpsilon);
 		EnterDrift(fmaxf(nfsVehicle.m_forwardSpeed, 0.f), vfDriftScale);
 	}
 
@@ -194,11 +197,12 @@ void DriftComponent::UpdateDriftState(const Vec4& lvfGasInput, const Vec4& lvfBr
 		// get avg rear slip angle instead of body slip angle again
 		Vec4 vfAvgRearSlipAngle = RadiansToDegrees((nfsVehicle.m_raceCarOutputState.tireSlipAngle[2] + nfsVehicle.m_raceCarOutputState.tireSlipAngle[3]) * 0.5f);
 		Vec4 vfAngleToExitDrift = mpParams->mExitParams.m_performanceModificationComponent->GetModifiedValue(ATM_DriftAngleToExitDrift, mpParams->mExitParams.m_driftConfig->Drift_angle_to_exit_drift);
-		if (VecCmpLT(VecAbs(vfAvgRearSlipAngle), vfAngleToExitDrift))
+		// check drift scale to fix bug where the car will get stuck in a loop entering/exiting a low scale drift every 0.5 secs
+		if (VecCmpLT(VecAbs(vfAvgRearSlipAngle), vfAngleToExitDrift) || VecCmpLE(VecAbs(mvfDriftScale), Vec4::kEpsilon))
 		{
 			// exiting or chaining drift
 
-			ExitDrift(lpSteeringComponent);
+			//ExitDrift(lpSteeringComponent);
 
 			Vec4 vfAbsSteeringInput = VecAbs(lvfSteeringInput);
 			Vec4 vfDonutSpeedLimitHighMps = MphToMps(mpParams->mYawTorqueParams.m_driftConfig->Donut_speed_limit_high);
@@ -216,10 +220,14 @@ void DriftComponent::UpdateDriftState(const Vec4& lvfGasInput, const Vec4& lvfBr
 				Vec4 vfStartingDriftScale = mpParams->mDriftScaleParams.m_driftConfig->Starting_drift_scale;
 				// the handbrake drift scale will never be used here because they already exit the drift and return above if the handbrake is engaged
 				// I have no idea why they put that here when all that was needed was the starting drift scale
-				Vec4 vfHandbrakeDriftScale;
-				lpHandbrake.GetDriftScaleFromHandbrake(vfHandbrakeDriftScale, lpRaceCar);
-				Vec4 vfSlipAngleSign = VecSign(vfAvgRearSlipAngle);
-				Vec4 vfDriftScale = (VecSelect(vfHandbrakeDriftScale, vfStartingDriftScale, BoolToVecMask(nfsVehicle.m_wasHandbrakeOnLastUpdate)) + Vec4::kEpsilon) * vfSlipAngleSign;
+				//Vec4 vfHandbrakeDriftScale = lpHandbrake.GetDriftScaleFromHandbrake(lpRaceCar);
+				//Vec4 vfSlipAngleSign = VecSign(vfAvgRearSlipAngle);
+				//Vec4 vfDriftScale = (VecSelect(vfHandbrakeDriftScale, vfStartingDriftScale, BoolToVecMask(nfsVehicle.m_wasHandbrakeOnLastUpdate)) + Vec4::kEpsilon) * vfSlipAngleSign;
+
+				LinearTransform trans = mpChassisRigidBody->GetTransform();
+				Vec4 vfAngVel = mpChassisRigidBody->GetAngularVelocity();
+				Vec4 vfDirection = VecSign(VecDot3(vfAngVel, SimdToVec4(trans.up)));
+				Vec4 vfDriftScale = (vfStartingDriftScale + Vec4::kEpsilon) * vfDirection;
 				EnterDrift(fmaxf(nfsVehicle.m_forwardSpeed, 0.f), vfDriftScale);
 			}
 		}
@@ -261,8 +269,7 @@ void DriftComponent::UpdateDrift(const Vec4& lvfGasInput, const Vec4& lvfBrakeIn
 		mbIsCounterSteeringInDrift = false;
 		mv_YawDamping_Spare_Spare_Spare = Vec4::kZero;
 		Vec4 vfAbsDriftScale = VecAbs(mvfDriftScale);
-		Vec4 vfLinearVel;
-		mpChassisRigidBody->GetLinearVelocity(vfLinearVel);
+		Vec4 vfLinearVel = mpChassisRigidBody->GetLinearVelocity();
 		Vec4 vfFwdSpeed = VecLength3(vfLinearVel);
 		// get avg rear slip angle instead of body slip angle again
 		mvfRearSlipAngle = RadiansToDegrees((nfsVehicle.m_raceCarOutputState.tireSlipAngle[2] + nfsVehicle.m_raceCarOutputState.tireSlipAngle[3]) * 0.5f);
