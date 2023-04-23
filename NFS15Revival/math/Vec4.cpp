@@ -348,7 +348,7 @@ Vec4 VecRecip(Vec4& v)
 }
 
 // Performs the dot product of 2 vectors
-float Dot3(Vec4& a, Vec4& b)
+float Dot3(Vec4 const& a, Vec4 const& b)
 {
 	Vec4 mul = a * b;
 	Vec4 dot = VecSwizzleMask(mul, k_xxxx) + VecSwizzleMask(mul, k_yyyy) + VecSwizzleMask(mul, k_zzzz);
@@ -356,7 +356,7 @@ float Dot3(Vec4& a, Vec4& b)
 }
 
 // Performs the dot product of 2 vectors
-Vec4 VecDot3(Vec4& a, Vec4& b)
+Vec4 VecDot3(Vec4 const& a, Vec4 const& b)
 {
 	Vec4 mul = a * b;
 	Vec4 dot = VecSwizzleMask(mul, k_xxxx) + VecSwizzleMask(mul, k_yyyy) + VecSwizzleMask(mul, k_zzzz);
@@ -431,6 +431,13 @@ Vec4 VecSin(Vec4& in)
 {
 	Vec4 v = in - Vec4(1.5707964f);
 	return VecCos(v);
+}
+
+Vec4 VecDistanceBetween(Vec4 const& a, Vec4 const& b)
+{
+	Vec4 diff = VecSub(a, b);
+	Vec4 dot  = VecDot3(diff, diff);
+	return dot;
 }
 
 #pragma endregion Vector Math

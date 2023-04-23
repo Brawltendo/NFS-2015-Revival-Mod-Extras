@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "RevivalDriftComponent.h"
-#include "VehiclePhysics/Components/DriftComponent.h"
+#include <Engine/Physics/Vehicle/EAGR/PhysicsComponents/DriftComponent.h>
+#include <Engine/Physics/Vehicle/EAGR/PhysicsComponents/DriftParams.h>
 #include "NFSClasses.h"
 #include "util/memoryutils.h"
 #include <algorithm>
@@ -58,7 +59,7 @@ void RevivalDriftComponent::PreUpdate(NFSVehicle& nfsVehicle, DriftComponent& dr
             isGasStab = driftComp.mvfPreviousGasInput.m128_f32[0] > params.mMinTimeForGasStab && driftComp.mvfPreviousGasInput.m128_f32[0] < params.mMaxTimeForGasStab;
 
         // use drift config fields for compatibility with performance mod system
-        const float angleToEnterDrift = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_MinimumAngleForDrift, driftComp.mpParams->driftScaleParams->Slip_angle_to_enter_drift);
+        const float angleToEnterDrift = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_MinimumAngleForDrift, driftComp.mpParams->mDriftScaleParams.m_driftConfig->Slip_angle_to_enter_drift);
         const float slipAngle = nfsVehicle.m_sideSlipAngle * 180.f * 0.31830987f;
         bool isSlipping = fabsf(slipAngle) >= angleToEnterDrift;
 
@@ -170,9 +171,9 @@ void RevivalDriftComponent::UpdateStabilizationForces(NFSVehicle& nfsVehicle, Dr
             float angleRatio = (fabsf(nfsVehicle.m_sideSlipAngle) - LowAngleForAutoDriftSteer) / (HighAngleForAutoDriftSteer - LowAngleForAutoDriftSteer);
             float dpSideVel = Dot3(linVel, vRight);
             // use drift config fields for compatibility with performance mod system
-            const float sideForceScale = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_DefaultSteering, driftComp.mpParams->driftScaleParams->Default_steering);
-            const float extForceMagnitude = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_SideForceMagnitude, driftComp.mpParams->driftScaleParams->Side_force_magnitude);
-            const float forwardForceScale = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_CounterSteeringRemapping, driftComp.mpParams->driftScaleParams->Counter_steering_remapping);
+            const float sideForceScale = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_DefaultSteering, driftComp.mpParams->mOtherParams.m_driftConfig->Default_steering);
+            const float extForceMagnitude = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_SideForceMagnitude, driftComp.mpParams->mSideForceParams.m_driftConfig->Side_force_magnitude);
+            const float forwardForceScale = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_CounterSteeringRemapping, driftComp.mpParams->mOtherParams.m_driftConfig->Counter_steering_remapping);
             // overall force scales with the car's angle
             float force = fminf(fmaxf(angleRatio, 0.f), 1.f) * extForceMagnitude * nfsVehicle.m_originalMass;
             // scale force by clamped throttle
@@ -279,9 +280,9 @@ void RevivalDriftComponent::Update(NFSVehicle& nfsVehicle, DriftComponent& drift
         const float dT = nfsVehicle.m_currentUpdateDt;
         bool isCountersteering = steering * driftComp.mvfMaintainedSpeed.m128_f32[0] < 0.f;
         // use drift config fields for compatibility with performance mod system
-        const float angleToEnterDrift   = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_MinimumAngleForDrift, driftComp.mpParams->driftScaleParams->Slip_angle_to_enter_drift);
-        const float externalForcesScale = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_DriftScaleFromBraking, driftComp.mpParams->driftScaleParams->Drift_scale_from_braking);
-        const float externalAngVelScale = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_DriftScaleFromCounterSteering, driftComp.mpParams->driftScaleParams->Drift_scale_from_counter_steering);
+        const float angleToEnterDrift   = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_MinimumAngleForDrift, driftComp.mpParams->mDriftScaleParams.m_driftConfig->Slip_angle_to_enter_drift);
+        const float externalForcesScale = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_DriftScaleFromBraking, driftComp.mpParams->mDriftScaleParams.m_driftConfig->Drift_scale_from_braking);
+        const float externalAngVelScale = driftComp.m_performanceModificationComponent->GetModifiedValue(ATM_DriftScaleFromCounterSteering, driftComp.mpParams->mDriftScaleParams.m_driftConfig->Drift_scale_from_counter_steering);
 
         if (absSlipAngle < params.mAngleToExitDrift && (driftComp.pad_0017 == DriftState_Exiting || isCountersteering))
         {

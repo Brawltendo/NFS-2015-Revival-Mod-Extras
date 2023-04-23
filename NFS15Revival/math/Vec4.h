@@ -379,10 +379,10 @@ Vec4 VecNeg(const Vec4& v);
 Vec4 VecRecip(Vec4& v);
 
 // Performs the dot product of 2 vectors
-float Dot3(Vec4& a, Vec4& b);
+float Dot3(Vec4 const& a, Vec4 const& b);
 
 // Performs the dot product of 2 vectors
-Vec4 VecDot3(Vec4& a, Vec4& b);
+Vec4 VecDot3(Vec4 const& a, Vec4 const& b);
 
 // Returns the length of the input vector
 Vec4 VecLength3(Vec4& v);
@@ -398,5 +398,7 @@ Vec4 VecCos(Vec4& in);
 
 // Calculates the Taylor series sine of the input vector
 Vec4 VecSin(Vec4& in);
+
+Vec4 VecDistanceBetween(Vec4 const& a, Vec4 const& b);
 
 #pragma endregion Vector Math

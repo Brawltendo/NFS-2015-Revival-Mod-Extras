@@ -1,7 +1,7 @@
 #pragma once
 #include <xmmintrin.h>
 #include "NFSEnums.h"
-#include "VehiclePhysics/Config/RaceVehicleDriftConfigData.h"
+#include <Engine/Physics/Vehicle/EAGR/RaceVehicleDriftConfigData.h>
 
 
 class GearData

@@ -125,16 +125,6 @@ enum NFSVehicleState : __int32
 	NFSVehicleState_Dead = 0x7,
 };
 
-enum EHandbrakeState : __int32
-{
-	EHandbrakeStateOff = 0x0,
-	EHandbrakeStateOnForwards = 0x1,
-	EHandbrakeStateTurning = 0x2,
-	EHandbrakeStateTurnComplete = 0x3,
-	EHandbrakeStateOnBackwards = 0x4,
-	EHandbrakeStateJTurnComplete = 0x5,
-};
-
 enum VehicleCollisionBody : __int32
 {
 	VehicleCollisionBody_StockOnGround = 0x0,

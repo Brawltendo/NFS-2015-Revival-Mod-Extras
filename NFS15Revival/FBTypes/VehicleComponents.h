@@ -12,25 +12,6 @@ public:
 	char pad_0040[88]; //0x0040
 }; //Size: 0x0098
 
-class DriftParams
-{
-public:
-	class RaceVehicleDriftConfigData* driftTriggerParams; //0x0000
-	class PerformanceModificationComponent* N00000F69; //0x0008
-	class RaceVehicleDriftConfigData* driftScaleParams; //0x0010
-	class PerformanceModificationComponent* pad_0018; //0x0018
-	class RaceVehicleDriftConfigData* yawTorqueParams; //0x0020
-	class PerformanceModificationComponent* pad_0028; //0x0028
-	class RaceVehicleDriftConfigData* sideForceParams; //0x0030
-	class PerformanceModificationComponent* pad_0038; //0x0038
-	class RaceVehicleDriftConfigData* otherParams; //0x0040
-	class PerformanceModificationComponent* pad_0048; //0x0048
-	class RaceVehicleDriftConfigData* exitParams; //0x0050
-	class PerformanceModificationComponent* pad_0058; //0x0058
-	class RaceVehicleDriftConfigData* donutParams; //0x0060
-	char pad_0068[32]; //0x0068
-}; //Size: 0x0088
-
 class DriverComponent
 {
 public:
@@ -60,30 +41,3 @@ public:
 	bool isEngineOn; //0x015F
 	char pad_0160[40]; //0x0160
 }; //Size: 0x0188
-
-class HandbrakeComponent
-{
-public:
-	EHandbrakeState handbrakeState; //0x0000
-	char pad_0004[4]; //0x0004
-	class N0001090C* N00002EE9; //0x0008
-	__m128 timeSinceHandbraking; //0x0010
-	bool isHandbrakeOn; //0x0020
-	bool N00010905; //0x0021
-	unsigned __int16 N00010908; //0x0022
-	char pad_0024[12]; //0x0024
-	__m128 timeForTurnComplete; //0x0030
-	__m128 angVelDirection; //0x0040
-	__m128 N00002F03; //0x0050
-	class RaceVehicleDriftConfigData* driftConfig; //0x0060
-	class RaceVehicleBrakesConfigData* brakesConfig; //0x0068
-	class PerformanceModificationComponent* perfModComponent; //0x0070
-}; //Size: 0x0078
-
-class SteeringComponent
-{
-public:
-	class NFSVehicle* nfsVehicle; //0x0000
-	float steeringScale; //0x0008
-	float wheelSteeringAngleRadians; //0x000C
-}; //Size: 0x0010

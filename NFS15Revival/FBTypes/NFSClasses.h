@@ -1,7 +1,9 @@
 #pragma once
+
 #include <vector>
+#include <math/LinearTransform.h>
 #include "VehicleComponents.h"
-#include "VehiclePhysics/Core/Curve.hpp"
+#include <External/EA/VehiclePhysics/include/VehiclePhysics/Core/Curve.hpp>
 
 class AxlePairPointGraph8
 {
@@ -9,16 +11,6 @@ public:
 	PointGraph8 Front; //0x0000
 	PointGraph8 Rear; //0x0050
 }; //Size: 0x00A0
-
-class LinearTransform
-{
-public:
-	__m128 right; //0x0000
-	__m128 up; //0x0010
-	__m128 forward; //0x0020
-	__m128 trans; //0x0030
-}; //Size: 0x0040
-static_assert(sizeof(LinearTransform) == 0x40, "LinearTransform");
 
 struct Vector2
 {

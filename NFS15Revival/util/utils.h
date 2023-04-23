@@ -6,7 +6,9 @@
 #endif
 
 constexpr auto PI = 3.14159f;
-constexpr auto Epsilon = 0.00000011920929;
+constexpr auto Epsilon = 0.00000011920929f;
+constexpr auto Infinity = 3.4028235e38f;
+constexpr auto NegInfinity = -3.4028235e38f;
 
 float map(float s, float a1, float a2, float b1, float b2);
 

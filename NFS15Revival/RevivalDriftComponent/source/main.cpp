@@ -17,6 +17,7 @@
 #include <FBTypes/VehiclePhysics/Components/HandbrakeComponent.h>
 #include "PerformanceModification/PerformanceModification.h"
 #endif
+#include <FBTypes/Race/Client/Vehicle/ClientRaceVehicleDetector.h>
 #include "NFSClasses.h"
 #include <algorithm>
 #include "util/debug/debug.h"
@@ -143,6 +144,11 @@ void __fastcall ComputeAckerman(CoreChassis* chassis, float steering, Matrix44& 
 //        steerL);
 //}
 
+void ClientRaceVehicleDetector_update_Override(fb::ClientRaceVehicleDetector* const detector, const LinearTransform& transform, float deltaTime, float speedThreshold, const fb::GenericEntity& excludedVehicle)
+{
+    detector->update(transform, deltaTime, speedThreshold, &excludedVehicle);
+}
+
 inline void PatchDampPitchYawRoll()
 {
     // the goal here is to essentially just turn this into a "SetAngularVelocity" function because I don't know where the actual native one is
@@ -244,6 +250,7 @@ DWORD WINAPI Start(LPVOID lpParam)
     InjectHook(0x1441967A0, RemapSteeringForDrift_Orig);
     #endif
     InjectHook(0x1441B2F20, ComputeAckerman);
+    InjectHook(0x14433E110, ClientRaceVehicleDetector_update_Override);
     //InjectHook(0x1441B3CF0, DoSteering);
 
     #ifdef _DEBUG

@@ -19,9 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\FBTypes\VehiclePhysics\Components\DriftComponent.cpp" />
-    <ClCompile Include="..\FBTypes\VehiclePhysics\Components\HandbrakeComponent.cpp" />
-    <ClCompile Include="..\FBTypes\VehiclePhysics\Core\Curve.cpp" />
+    <ClCompile Include="..\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents\DriftComponent.cpp" />
+    <ClCompile Include="..\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents\HandbrakeComponent.cpp" />
+    <ClCompile Include="..\FBTypes\External\EA\VehiclePhysics\Core\Curve.cpp" />
+    <ClCompile Include="..\FBTypes\Race\Client\Vehicle\ClientRaceVehicleDetector.cpp" />
     <ClCompile Include="..\imgui\backends\imgui_impl_dx11.cpp" />
     <ClCompile Include="..\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="..\imgui\imgui.cpp" />
@@ -52,13 +53,17 @@
     <ClCompile Include="source\pch.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\FBTypes\Engine\Entity\EntityDeclarations.h" />
+    <ClInclude Include="..\FBTypes\Engine\Entity\EntityIterator.h" />
+    <ClInclude Include="..\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents\DriftComponent.h" />
+    <ClInclude Include="..\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents\DriftParams.h" />
+    <ClInclude Include="..\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents\HandbrakeComponent.h" />
+    <ClInclude Include="..\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents\RaceVehicleDriftConfigData.h" />
+    <ClInclude Include="..\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents\SteeringComponent.h" />
+    <ClInclude Include="..\FBTypes\Race\Client\Vehicle\ClientRaceVehicleDetector.h" />
+    <ClInclude Include="..\math\LinearTransform.h" />
     <ClInclude Include="..\FBTypes\VehicleComponents.h" />
-    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\DriftComponent.h" />
-    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\DriftParams.h" />
-    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\HandbrakeComponent.h" />
-    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\SteeringComponent.h" />
-    <ClInclude Include="..\FBTypes\VehiclePhysics\Config\RaceVehicleDriftConfigData.h" />
-    <ClInclude Include="..\FBTypes\VehiclePhysics\Core\Curve.hpp" />
+    <ClInclude Include="..\FBTypes\External\EA\VehiclePhysics\include\VehiclePhysics\Core\Curve.hpp" />
     <ClInclude Include="..\imgui\backends\imgui_impl_dx11.h" />
     <ClInclude Include="..\imgui\backends\imgui_impl_win32.h" />
     <ClInclude Include="..\imgui\imconfig.h" />
@@ -223,7 +228,7 @@ xcopy "$(SolutionDir)$(Platform)\$(Configuration)\$(TargetName).pdb" "L:\Games\N
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;NFS15REVIVAL_EXPORTS;_WINDOWS;_USRDLL;USE_REVIVAL_COMPONENT=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;NFS15REVIVAL_EXPORTS;_WINDOWS;_USRDLL;USE_REVIVAL_COMPONENT=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>

@@ -70,32 +70,86 @@
     <Filter Include="minhook\src\hde">
       <UniqueIdentifier>{369c4987-28b1-44f4-a209-ec79e7732504}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\FBTypes\VehiclePhysics">
-      <UniqueIdentifier>{003e68be-c4d9-483c-a982-e1e06749f5df}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\FBTypes\VehiclePhysics\Core">
-      <UniqueIdentifier>{53c5916f-7442-4f10-bc7f-a26dc28ca18a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\FBTypes\VehiclePhysics">
-      <UniqueIdentifier>{f5a2b912-6388-4d74-8c9c-4de067eab555}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\FBTypes\VehiclePhysics\Core">
-      <UniqueIdentifier>{eed765ef-3697-4134-a59c-d83608d2f68a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\FBTypes\VehiclePhysics\Components">
-      <UniqueIdentifier>{1d75544d-8e00-455f-92b3-043ba3fd949e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\FBTypes\VehiclePhysics\Components">
-      <UniqueIdentifier>{fae357b3-a662-4458-99ab-0d25498dc5fa}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\FBTypes\VehiclePhysics\Config">
-      <UniqueIdentifier>{516556d0-8d21-435d-a9f8-9801fa0e3d1f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\math">
       <UniqueIdentifier>{72fa50fb-4df5-425e-9559-793a2fdd57c3}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\DriftComponent">
       <UniqueIdentifier>{dcc18141-189b-4521-9d22-7112d3f2c5ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\Race">
+      <UniqueIdentifier>{11821e4e-5d30-4aa8-a83d-90dee03c9941}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\Race\Client">
+      <UniqueIdentifier>{be2ecc3f-028a-4cb3-bd9c-02bf9e0b1acb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\Race\Client\Vehicle">
+      <UniqueIdentifier>{bb0a60c2-e6a9-43ce-b288-360303d5e1eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\Race">
+      <UniqueIdentifier>{0fc34f6b-3360-490a-8c05-26dfe40ce8fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\Race\Client">
+      <UniqueIdentifier>{ca191b02-5d07-4c8e-ae7d-a29c15896237}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\Race\Client\Vehicle">
+      <UniqueIdentifier>{f25b3367-5631-4714-93e8-b37ee3f01cbe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\Engine">
+      <UniqueIdentifier>{43e8dc07-8b51-46ca-9ddb-3538e208b857}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\Engine\Physics">
+      <UniqueIdentifier>{a1370422-228a-4b10-9e8d-03a4336561f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\Engine\Physics\Vehicle">
+      <UniqueIdentifier>{b9ca99fa-3dec-4647-aff2-4f57732a71b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\Engine\Physics\Vehicle\EAGR">
+      <UniqueIdentifier>{17bed349-f81e-4273-9609-f1a74fa75399}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents">
+      <UniqueIdentifier>{2ea92e4f-e078-4764-9c97-f46fee83e9c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\Engine\Entity">
+      <UniqueIdentifier>{3476018d-d6e9-48c9-bcaf-f5687e8ac949}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\Engine">
+      <UniqueIdentifier>{81e6ca37-98ad-433b-b6e4-80508bcb58eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\Engine\Physics">
+      <UniqueIdentifier>{1b45f6e2-55b5-4aba-836e-843bcba41614}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\Engine\Physics\Vehicle">
+      <UniqueIdentifier>{9837eba6-141c-43cd-b47b-ade5186f6643}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\Engine\Physics\Vehicle\EAGR">
+      <UniqueIdentifier>{af6582fb-6eb4-4171-98c2-f28aeee9b90a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents">
+      <UniqueIdentifier>{561406b0-e0cb-4ab8-a5b9-87e50633a681}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\External">
+      <UniqueIdentifier>{bac7144e-026d-4489-9344-7a5f951ad49e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\External\EA">
+      <UniqueIdentifier>{af4de22f-4717-4d1f-8fc2-10de86616905}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\External\EA\VehiclePhysics">
+      <UniqueIdentifier>{003e68be-c4d9-483c-a982-e1e06749f5df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\FBTypes\External\EA\VehiclePhysics\Core">
+      <UniqueIdentifier>{53c5916f-7442-4f10-bc7f-a26dc28ca18a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\External">
+      <UniqueIdentifier>{68b01062-fd55-4a56-93fa-4b37f09d5821}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\External\EA">
+      <UniqueIdentifier>{192d2590-946c-4e6a-a686-ba7b3f4409df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\External\EA\VehiclePhysics">
+      <UniqueIdentifier>{f5a2b912-6388-4d74-8c9c-4de067eab555}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\FBTypes\External\EA\VehiclePhysics\Core">
+      <UniqueIdentifier>{eed765ef-3697-4134-a59c-d83608d2f68a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -168,20 +222,23 @@
     <ClCompile Include="..\util\memoryutils.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
-    <ClCompile Include="..\FBTypes\VehiclePhysics\Core\Curve.cpp">
-      <Filter>Source Files\FBTypes\VehiclePhysics\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="..\FBTypes\VehiclePhysics\Components\DriftComponent.cpp">
-      <Filter>Source Files\FBTypes\VehiclePhysics\Components</Filter>
-    </ClCompile>
     <ClCompile Include="..\math\Vec4.cpp">
       <Filter>Source Files\math</Filter>
     </ClCompile>
     <ClCompile Include="..\math\Vec2.cpp">
       <Filter>Source Files\math</Filter>
     </ClCompile>
-    <ClCompile Include="..\FBTypes\VehiclePhysics\Components\HandbrakeComponent.cpp">
-      <Filter>Source Files\FBTypes\VehiclePhysics\Components</Filter>
+    <ClCompile Include="..\FBTypes\Race\Client\Vehicle\ClientRaceVehicleDetector.cpp">
+      <Filter>Source Files\FBTypes\Race\Client\Vehicle</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents\HandbrakeComponent.cpp">
+      <Filter>Source Files\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FBTypes\External\EA\VehiclePhysics\Core\Curve.cpp">
+      <Filter>Source Files\FBTypes\External\EA\VehiclePhysics\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents\DriftComponent.cpp">
+      <Filter>Source Files\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -278,17 +335,8 @@
     <ClInclude Include="..\util\memoryutils.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
-    <ClInclude Include="..\FBTypes\VehiclePhysics\Core\Curve.hpp">
-      <Filter>Header Files\FBTypes\VehiclePhysics\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\DriftComponent.h">
-      <Filter>Header Files\FBTypes\VehiclePhysics\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\DriftParams.h">
-      <Filter>Header Files\FBTypes\VehiclePhysics\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="..\FBTypes\VehiclePhysics\Config\RaceVehicleDriftConfigData.h">
-      <Filter>Header Files\FBTypes\VehiclePhysics\Config</Filter>
+    <ClInclude Include="..\FBTypes\External\EA\VehiclePhysics\include\VehiclePhysics\Core\Curve.hpp">
+      <Filter>Header Files\FBTypes\External\EA\VehiclePhysics\Core</Filter>
     </ClInclude>
     <ClInclude Include="..\math\Vec2.h">
       <Filter>Header Files\math</Filter>
@@ -296,14 +344,35 @@
     <ClInclude Include="..\math\Vec4.h">
       <Filter>Header Files\math</Filter>
     </ClInclude>
-    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\SteeringComponent.h">
-      <Filter>Header Files\FBTypes\VehiclePhysics\Components</Filter>
-    </ClInclude>
     <ClInclude Include="source\DriftComponent\RevivalDriftComponent.h">
       <Filter>Header Files\DriftComponent</Filter>
     </ClInclude>
-    <ClInclude Include="..\FBTypes\VehiclePhysics\Components\HandbrakeComponent.h">
-      <Filter>Header Files\FBTypes\VehiclePhysics\Components</Filter>
+    <ClInclude Include="..\math\LinearTransform.h">
+      <Filter>Header Files\math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FBTypes\Race\Client\Vehicle\ClientRaceVehicleDetector.h">
+      <Filter>Header Files\FBTypes\Race\Client\Vehicle</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FBTypes\Engine\Entity\EntityIterator.h">
+      <Filter>Header Files\FBTypes\Engine\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FBTypes\Engine\Entity\EntityDeclarations.h">
+      <Filter>Header Files\FBTypes\Engine\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents\DriftComponent.h">
+      <Filter>Header Files\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents\DriftParams.h">
+      <Filter>Header Files\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents\SteeringComponent.h">
+      <Filter>Header Files\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents\RaceVehicleDriftConfigData.h">
+      <Filter>Header Files\FBTypes\Engine\Physics\Vehicle\EAGR</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents\HandbrakeComponent.h">
+      <Filter>Header Files\FBTypes\Engine\Physics\Vehicle\EAGR\PhysicsComponents</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

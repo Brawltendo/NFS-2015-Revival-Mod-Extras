@@ -126,9 +126,9 @@ struct DriftParameters
 static const DriftParameters s_GlobalDriftParams =
 {
 	/* mCSYawScaleForZeroSteerTime   */  0.65f,
-	/* mYawScaleForZeroSteerTime     */  0.8f,
+	/* mYawScaleForZeroSteerTime     */  0.84f,
 	/* mCSYawScaleForMaxSteerTime    */  1.f,
-	/* mYawScaleForMaxSteerTime	     */  1.f,
+	/* mYawScaleForMaxSteerTime	     */  1.2f,
 	/* mYawAccelScale                */  1.f,
 	/* mSlipAngleRatioScale          */  1.f,
 	/* mMaxSteeringTime	             */  2.f,
